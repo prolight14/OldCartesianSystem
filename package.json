@@ -1,0 +1,31 @@
+{
+  "name": "cartesiansystem",
+  "version": "1.0.0-alpha",
+  "description": "A spatial partitioning system plugin for phaser 3",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prolight14/CartesianSystem.git"
+  },
+  "keywords": [
+    "spatial",
+    "partitioning",
+    "spatial-partitioning",
+    "cartesian"
+  ],
+  "author": "ProlightHub <ExoPhantomFalcon@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/prolight14/CartesianSystem/issues"
+  },
+  "homepage": "https://github.com/prolight14/CartesianSystem#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "webpack": "^4.44.1",
+    "webpack-cli": "^3.3.12"
+  }
+}
