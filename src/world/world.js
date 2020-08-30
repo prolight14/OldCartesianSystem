@@ -1,9 +1,13 @@
-let grid = require("../grid");
+let CameraGrid = require("../cameraGrid");
 
 function World(config)
 {
-    this.grid = grid;
-    grid.init(config.grid.rows, config.grid.cols, config.cell.width, config.cell.height);
+    this.cameraGrid = new CameraGrid();
+
+    return function()
+    {
+
+    };
 }
 
-module.exports = World;
+modules.export = World;

@@ -125,7 +125,7 @@ eval("/* WEBPACK VAR INJECTION */(function(global) {var CartesianSystem = {\r\n 
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-eval("let grid = [];\r\ngrid.init = function(cols, rows, cellWidth, cellHeight)\r\n{\r\n    this.cols = cols;\r\n    this.rows = rows;\r\n    this.cellWidth = cellWidth;\r\n    this.cellHeight = cellHeight;\r\n};\r\n\r\nmodule.exports = grid;\n\n//# sourceURL=webpack://CartesianSystem/./grid/grid.js?");
+eval("let grid = [];\r\n\r\n/**\r\n * Initializes the grid with values\r\n * \r\n * @param {number} cols \r\n * @param {number} rows \r\n * @param {number} cellWidth \r\n * @param {number} cellHeight \r\n */\r\ngrid.init = function(cols, rows, cellWidth, cellHeight)\r\n{\r\n    this.cols = cols;\r\n    this.rows = rows;\r\n    this.cellWidth = cellWidth;\r\n    this.cellHeight = cellHeight;\r\n};\r\n\r\n/**\r\n * Empties then fills the grid with empty objects\r\n */\r\ngrid.build = function()\r\n{\r\n    this.length = 0;\r\n\r\n    for(var i = 0; i < this.cols; i++)\r\n    {\r\n        this.push(Array(rows).fill(Object.create(null)));\r\n    }\r\n};\r\n\r\nmodule.exports = grid;\n\n//# sourceURL=webpack://CartesianSystem/./grid/grid.js?");
 
 /***/ }),
 
@@ -158,7 +158,7 @@ eval("let World = __webpack_require__(/*! ./world.js */ \"./world/world.js\");\r
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-eval("let grid = __webpack_require__(/*! ../grid */ \"./grid/index.js\");\r\n\r\nfunction World(config)\r\n{\r\n    this.grid = grid;\r\n    grid.init(config.grid.rows, config.grid.cols, config.cell.width, config.cell.height);\r\n}\r\n\r\nmodule.exports = World;\n\n//# sourceURL=webpack://CartesianSystem/./world/world.js?");
+eval("let grid = __webpack_require__(/*! ../grid */ \"./grid/index.js\");\r\n\r\nfunction World(config)\r\n{\r\n    grid.init(config.grid.rows, config.grid.cols, config.cell.width, config.cell.height);\r\n}\r\n\r\nmodule.exports = World;\n\n//# sourceURL=webpack://CartesianSystem/./world/world.js?");
 
 /***/ })
 
