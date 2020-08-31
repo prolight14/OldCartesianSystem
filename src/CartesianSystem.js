@@ -1,5 +1,6 @@
 var CartesianSystem = {
-    World: require("./World.js")
+    World: require("./World.js"),
+    GameObjects: require("./gameObjects")
 };
 
 // Export it

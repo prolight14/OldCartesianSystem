@@ -25,6 +25,14 @@ let config = {
             height: canvas.height - 80
         }
     },
+    // level: {
+    //     bounds: {
+    //         minX: 50,
+    //         minY: 70,
+    //         maxX: 200,//3000,
+    //         maxY: 220//2986
+    //     }
+    // },
     grid: {
         rows: 12,
         cols: 12,
@@ -48,13 +56,29 @@ var player = {
 
 world.cam.setFocus(player.x, player.y, "player");
 
+var Pig = function(x, y, weight)
+{
+    this.x = x;
+    this.y = y;
+    this.weight = weight;
+
+    this.draw = function()
+    {
+        console.log("Drawing not yet supported.");
+    };
+};
+Pig.prototype.getWeightInQuarters = function()
+{
+    return this.weight * (1 / 4);
+};
+
+var pigs = createAA(Pig);
+
 var loop = function()
 {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    world.cam.updateFocus(player.x, player.y);
 
     var translateValues = world.cam.getTranslateValues();
     ctx.translate(translateValues.x, translateValues.y);
@@ -79,6 +103,8 @@ var loop = function()
         player.y += 5;
     }
 
+    world.cam.updateFocus(player.x, player.y);
+
     world.step();
 
     ctx.strokeStyle = "white";
@@ -92,7 +118,19 @@ var loop = function()
         ctx.strokeRect(col * cellWidth, row * cellHeight, cellWidth, cellHeight);
     });
 
+    var bounds = world.cam.getBounds();
+
+    ctx.lineWidth = 4;
+    ctx.strokeRect(
+        bounds.minX, 
+        bounds.minY, 
+        bounds.maxX - bounds.minX, 
+        bounds.maxY - bounds.minY, 
+    );
+
     ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    ctx.lineWidth = 2;
 
     ctx.strokeRect(
         config.camera.window.x, 

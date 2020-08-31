@@ -217,8 +217,8 @@ Camera.prototype.scroll = function(x, y)
     this.scrollY += moveMag * Math.sin(moveDir);
 
     // Keep it within bounds
-    this.scrollX = Math.min(Math.max(this.scrollX, this.bounds.minX), this.bounds.maxX);
-    this.scrollY = Math.min(Math.max(this.scrollY, this.bounds.minY), this.bounds.maxY);
+    this.scrollX = Math.min(Math.max(this.scrollX, this.bounds.minX + this.halfWindowWidth), this.bounds.maxX - this.halfWindowWidth);
+    this.scrollY = Math.min(Math.max(this.scrollY, this.bounds.minY + this.halfWindowHeight), this.bounds.maxY - this.halfWindowHeight);
 
     // Update the bounding box
     this.boundingBox.minX = this.scrollX - this.halfWindowWidth;
@@ -366,6 +366,20 @@ function World(config)
         config.grid.cell.height
     );
 
+    if(typeof config.level === "undefined" || typeof config.level.bounds === "undefined")
+    {
+        camera.bounds.minX = camera.bounds.minY = 0;
+        camera.bounds.maxX = config.grid.cols * config.grid.cell.width;
+        camera.bounds.maxY = config.grid.rows * config.grid.cell.height;
+    }
+    else
+    {
+        camera.bounds.minX = config.level.bounds.minX;
+        camera.bounds.minY = config.level.bounds.minY;
+        camera.bounds.maxX = config.level.bounds.maxX;
+        camera.bounds.maxY = config.level.bounds.maxY;
+    }
+
     var cameraTracker = {};
     cameraTracker.update = function()
     {
@@ -429,6 +443,10 @@ function World(config)
     this.cam.getTranslateValues = function()
     {
         return camera.getTranslateValues();
+    };
+    this.cam.getBounds = function()
+    {
+        return camera.bounds;
     };
     
     this.grid = {};

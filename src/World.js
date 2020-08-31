@@ -16,6 +16,20 @@ function World(config)
         config.grid.cell.height
     );
 
+    if(typeof config.level === "undefined" || typeof config.level.bounds === "undefined")
+    {
+        camera.bounds.minX = camera.bounds.minY = 0;
+        camera.bounds.maxX = config.grid.cols * config.grid.cell.width;
+        camera.bounds.maxY = config.grid.rows * config.grid.cell.height;
+    }
+    else
+    {
+        camera.bounds.minX = config.level.bounds.minX;
+        camera.bounds.minY = config.level.bounds.minY;
+        camera.bounds.maxX = config.level.bounds.maxX;
+        camera.bounds.maxY = config.level.bounds.maxY;
+    }
+
     var cameraTracker = {};
     cameraTracker.update = function()
     {
@@ -80,7 +94,11 @@ function World(config)
     {
         return camera.getTranslateValues();
     };
-    
+    this.cam.getBounds = function()
+    {
+        return camera.bounds;
+    };
+
     this.grid = {};
     this.grid.loopThroughVisibleCells = function(callback)
     {

@@ -81,8 +81,8 @@ Camera.prototype.scroll = function(x, y)
     this.scrollY += moveMag * Math.sin(moveDir);
 
     // Keep it within bounds
-    this.scrollX = Math.min(Math.max(this.scrollX, this.bounds.minX), this.bounds.maxX);
-    this.scrollY = Math.min(Math.max(this.scrollY, this.bounds.minY), this.bounds.maxY);
+    this.scrollX = Math.min(Math.max(this.scrollX, this.bounds.minX + this.halfWindowWidth), this.bounds.maxX - this.halfWindowWidth);
+    this.scrollY = Math.min(Math.max(this.scrollY, this.bounds.minY + this.halfWindowHeight), this.bounds.maxY - this.halfWindowHeight);
 
     // Update the bounding box
     this.boundingBox.minX = this.scrollX - this.halfWindowWidth;
