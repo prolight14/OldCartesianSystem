@@ -9,9 +9,9 @@ function Camera(windowX, windowY, windowWidth, windowHeight)
     this.halfWindowHeight = this.windowHeight / 2;
 
     // Needed for moving the camera
-    this.focusX = 0;
-    this.focusY = 0;
-    this.focusSpeed = 0.5;
+    this.scrollX = this.halfWindowWidth;
+    this.scrollY = this.halfWindowHeight;
+    this.scrollSpeed = 0.5;
 
     // The bounds the camera will stay with in
     // These will need to be set externally
@@ -21,21 +21,74 @@ function Camera(windowX, windowY, windowWidth, windowHeight)
         maxX: Infinity,
         maxY: Infinity
     };
+
+    this.boundingBox = {
+        minX: this.scrollX - this.halfWindowWidth,
+        minY: this.scrollY - this.halfWindowHeight,
+        maxX: this.scrollX + this.halfWindowWidth,
+        maxY: this.scrollY + this.halfWindowHeight
+    };
+
+    var focusObject;
+
+    this.update = function()
+    {
+        if(focusObject)
+        {
+            this.scroll(focusObject.x, focusObject.y);
+        }
+    };
+
+    this.setFocus = function(x, y, name)
+    {
+        focusObject = {
+            x: x,
+            y: y,
+            name: name
+        };
+    };
+    this.updateFocus = function(x, y)
+    {
+        focusObject.x = x;
+        focusObject.y = y;
+    };
+    this.getFocus = function()
+    {
+        return focusObject;
+    };
+    this.removeFocus = function()
+    {
+        focusObject = undefined;
+    };
+
+    this.getTranslateValues = function()
+    {
+        return {
+            x: this.windowX + this.halfWindowWidth - this.scrollX,
+            y: this.windowY + this.halfWindowHeight - this.scrollY, 
+        };
+    };
 }
-Camera.prototype.moveFocus = function(x, y)
+Camera.prototype.scroll = function(x, y)
 {
     // Move direction and move magnitude
-    // These will be used to move the focus of the camera 
-    var moveDir = Math.atan2(y - this.focusY, x - this.focusX);
-    var moveMag = Math.sqrt(Math.pow(x - this.focusX, 2) + Math.pow(y - this.focusY, 2)) * this.speed;
+    // These will be used to move the scroll of the camera 
+    var moveDir = Math.atan2(y - this.scrollY, x - this.scrollX);
+    var moveMag = Math.sqrt(Math.pow(x - this.scrollX, 2) + Math.pow(y - this.scrollY, 2)) * this.scrollSpeed;
 
     // Move camera in both x and y components
-    this.focusX += this.distance * Math.cos(this.angle);
-    this.focusY += this.distance * Math.sin(this.angle);
+    this.scrollX += moveMag * Math.cos(moveDir);
+    this.scrollY += moveMag * Math.sin(moveDir);
 
     // Keep it within bounds
-    this.focusX = Math.min(Math.max(this.focusX, this.bounds.minX), this.bounds.maxX);
-    this.focusY = Math.min(Math.max(this.focusY, this.bounds.minY), this.bounds.maxY);
+    this.scrollX = Math.min(Math.max(this.scrollX, this.bounds.minX), this.bounds.maxX);
+    this.scrollY = Math.min(Math.max(this.scrollY, this.bounds.minY), this.bounds.maxY);
+
+    // Update the bounding box
+    this.boundingBox.minX = this.scrollX - this.halfWindowWidth;
+    this.boundingBox.minY = this.scrollY - this.halfWindowHeight;
+    this.boundingBox.maxX = this.scrollX + this.halfWindowWidth;
+    this.boundingBox.maxY = this.scrollY + this.halfWindowHeight;
 };
 
 module.exports = Camera;
