@@ -185,8 +185,11 @@ function Camera(windowX, windowY, windowWidth, windowHeight)
     };
     this.updateFocus = function(x, y)
     {
-        focusObject.x = x;
-        focusObject.y = y;
+        if(focusObject)
+        {
+            focusObject.x = x;
+            focusObject.y = y;
+        }
     };
     this.getFocus = function()
     {
@@ -247,15 +250,15 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
     this.halfCellWidth = cellWidth / 2;
     this.halfCellHeight = cellHeight / 2;
 
+    this.grid = [];
+
     var round = Math.round;
     var min = Math.min;
     var max = Math.max;
 
-    var grid = [];
-
     this.reset = function()
     {
-        grid.length = 0;
+        this.grid.length = 0;
 
         var cols = this.cols;
         var rows = this.rows;
@@ -265,24 +268,24 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
         {
             // Create a cell with no __proto__ object
             cell = Object.create(null);
-
-            grid.push(Array(rows).fill(cell));
+            cell.refs = Object.create(null);
+            this.grid.push(Array(rows).fill(cell));
         }
         
         this.minCol = 0;
         this.minRow = 0;
-        this.maxCol = grid.length - 1;
-        this.maxRow = grid[0].length - 1;
+        this.maxCol = this.grid.length - 1;
+        this.maxRow = this.grid[0].length - 1;
     };
 
     /**
      * Only use if you understand the implications, in other 
      * words only use if you don't need a bounds check first
      * 
-     * @method CameraGrid#getCoordinatesFast
+     * @method CameraGrid#getCoorssFast
      * @returns {object} col and row
      */
-    this.getCoordinatesFast = function()
+    this.getCoorsFast = function()
     {
         return {
             col: round((x - this.halfCellWidth) / this.cellWidth),
@@ -293,15 +296,66 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
     /**
      * Converts x and y to col and row
      * 
-     * @method CameraGrid#getCoordinates
+     * @method CameraGrid#getCoors
      * @returns {object} col and row
      */
-    this.getCoordinates = function()
+    this.getCoors = function()
     {
         return {
             col: max(min(round((x - this.halfCellWidth) / this.cellWidth), this.maxCol), this.minCol),
             row: max(min(round((y - this.halfCellHeight) / this.cellHeight), this.maxRow), this.minRow)
         };
+    };
+
+    this.addRef = function(object)
+    {   
+        var key = object._arrayName + object._id;
+        var toSet = {
+            arrayName: object._arrayName,
+            id: object._id
+        };
+
+        var box = object.body.boundingBox;
+
+        var minCol = min(max(round((box.minX - this.halfCellWidth) / this.cellWidth), this.minCol), this.maxCol),
+            minRow = min(max(round((box.minY - this.halfCellHeight) / this.cellHeight), this.minRow), this.maxRow),
+            maxCol = min(max(round((box.maxX - this.halfCellWidth) / this.cellWidth), this.minCol), this.maxCol),
+            maxRow = min(max(round((box.maxY - this.halfCellHeight) / this.cellHeight), this.minRow), this.maxRow);
+
+        var col, row;
+
+        for(col = minCol; col < maxCol; col++)
+        {
+            for(row = minRow; row < maxRow; row++)
+            {
+                this.grid[col][row].refs[key] = toSet;
+            }
+        }
+
+        object._minCol = minCol;
+        object._minRow = minRow;
+        object._maxCol = maxCol;
+        object._maxRow = maxRow;
+    };
+
+    this.removeRef = function()
+    {
+        var key = object._arrayName + object._id;
+
+        var minCol = object._minCol,
+            minRow = object._minRow,
+            maxCol = object._maxCol,
+            maxRow = object._maxRow;
+
+        var col, row;
+
+        for(col = minCol; col < maxCol; col++)
+        {
+            for(row = minRow; row < maxRow; row++)
+            {
+                delete this.grid[col][row].refs[key];
+            }
+        }
     };
 
     this.loopWithin = function(upperLeftCol, upperLeftRow, lowerRightCol, lowerRightRow, callback)
@@ -312,7 +366,7 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
         {
             for(row = upperLeftRow; row <= lowerRightRow; row++)
             {
-                callback(grid[col][row], col, row);
+                callback(this.grid[col][row], col, row);
             }
         }
     };
@@ -341,6 +395,53 @@ global.CartesianSystem = CartesianSystem;
 
 /***/ }),
 
+/***/ "./GameObjectHandler.js":
+/*!******************************!*\
+  !*** ./GameObjectHandler.js ***!
+  \******************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var createAA = __webpack_require__(/*! ./createAA.js */ "./createAA.js");
+
+function GameObjectHandler()
+{
+    var gameObjects = createAA([], undefined, "gameObjects");
+    var used = Object.create(null);
+
+    this.window = function(grid, minCol, minRow, maxCol, maxRow) 
+    {
+        var col, row, cell, i;
+
+        for(col = minCol; col < maxCol; col++)
+        {
+            for(row = minRow; row < maxRow; row++)
+            {
+                cell = grid[col][row];
+
+                for(i in cell.refs)
+                {
+
+                }
+            }
+        }
+    };
+
+    this.act = function(key)
+    {
+
+    };
+
+    this.eachObjectsInCamera = function(callback)
+    {
+
+    };
+}
+
+module.exports = GameObjectHandler;
+
+/***/ }),
+
 /***/ "./World.js":
 /*!******************!*\
   !*** ./World.js ***!
@@ -350,6 +451,8 @@ global.CartesianSystem = CartesianSystem;
 
 let Camera = __webpack_require__(/*! ./Camera.js */ "./Camera.js");
 let CameraGrid = __webpack_require__(/*! ./CameraGrid.js */ "./CameraGrid.js");
+let GameObjectHandler = __webpack_require__(/*! ./GameObjectHandler */ "./GameObjectHandler.js");
+let createAA = __webpack_require__(/*! ./createAA.js */ "./createAA.js");
 
 function World(config)
 {
@@ -365,6 +468,7 @@ function World(config)
         config.grid.cell.width, 
         config.grid.cell.height
     );
+    let gameObjectHandler = new GameObjectHandler();
 
     if(typeof config.level === "undefined" || typeof config.level.bounds === "undefined")
     {
@@ -380,14 +484,15 @@ function World(config)
         camera.bounds.maxY = config.level.bounds.maxY;
     }
 
+    var round = Math.round;
+    var min = Math.min;
+    var max = Math.max;
+
     var cameraTracker = {};
     cameraTracker.update = function()
     {
         // Note: Keep this out of the camera!
         var camBox = camera.boundingBox;
-        var round = Math.round;
-        var min = Math.min;
-        var max = Math.max;
         var cg = cameraGrid;
 
         // Todo: get rid of the bounds restrainment (min/max functions) and keep the camera in the world/grid 
@@ -409,9 +514,35 @@ function World(config)
     this.step = function()
     {
         camera.update();
-
         cameraTracker.update();
+
+        gameObjectHandler.window(
+            cameraGrid.grid,
+            cameraTracker.upperLeftCol, 
+            cameraTracker.upperLeftRow, 
+            cameraTracker.lowerRightCol, 
+            cameraTracker.lowerRightRow
+        );
+
+        for(var i = 0; i < arguments.length; i++)
+        {
+
+        }
     };
+
+    // DEV only!
+    this.exposeInternals = function()
+    {
+        return { 
+            camera: camera,
+            cameraGrid: cameraGrid,
+            gameObjectHandler: gameObjectHandler,
+            cameraTracker: cameraTracker
+        };
+    };
+
+    this.utils = {};
+    this.utils.createAA = createAA;
 
     this.cam = {};
     this.cam.setFocus = function(x, y, name)
@@ -448,7 +579,7 @@ function World(config)
     {
         return camera.bounds;
     };
-    
+
     this.grid = {};
     this.grid.loopThroughVisibleCells = function(callback)
     {
@@ -460,9 +591,174 @@ function World(config)
             callback
         );
     };
+    this.grid.addReference = function(object)
+    { 
+        cameraGrid.addRef(object);
+    };
 }
 
 module.exports = World;
+
+/***/ }),
+
+/***/ "./createAA.js":
+/*!*********************!*\
+  !*** ./createAA.js ***!
+  \*********************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * @function `createAA` Creates a key value pair system or associative array with methods
+ * 
+ * @param {Object} object The constructor/object to pass in 
+ * @param {object} keypairs The keypairs/associative array to pass in (optional)
+ * @param {string} arrayName What this array will be called (optional)
+ * 
+ * @returns {object} The keypair/associative array
+ */
+function createAA(object, keypairs, arrayName)
+{
+    if(typeof keypairs !== "object")
+    {
+        keypairs = Object.create(null);
+    }
+
+    arrayName = arrayName || object.name.charAt(0).toUpperCase() + object.name.slice(1);
+
+    /**
+     * All the methods and properties that are **NOT** part of the data that will be stored in `keypairs`
+     */
+    var system = {
+        cache: {
+            lowest: undefined, // Lowest empty index
+            highest: -1, // highest index
+        },
+        references: {},
+        _name: arrayName,
+        // Any thing added to this `add` method must also be added to the `add` method in the `if` statement
+        add: function()
+        {
+            var id = this.cache.highest + 1;
+
+            if(this.cache.lowest !== undefined && !this.unique)
+            {
+                id = this.cache.lowest;
+                this.cache.lowest = undefined;
+            }
+            if(id > this.cache.highest)
+            {
+                this.cache.highest = id;
+            }
+            this.cache.tempId = id;
+
+            var item = Object.create(object.prototype);
+            object.apply(item, arguments);
+            this[id] = item;
+            this[id]._name = this.cache.tempName || this.name;
+            this[id]._arrayName = this._name;
+            this[id]._id = id;
+            return item;
+        },
+        remove: function(id)
+        {
+            if(id === this.cache.highest)
+            {
+                this.cache.highest--;
+            }
+            if(this.cache.lowest === undefined || id < this.cache.lowest)
+            {
+                this.cache.lowest = id;
+            }
+
+            return delete this[id];
+        },
+        addObject: function(name)
+        {
+            if(this.references[name] !== undefined)
+            {
+                return;
+            }
+            
+            var args = Array.prototype.slice.call(arguments);
+            this.cache.tempName = args.shift();
+            var item = this.add.apply(this, args);
+            this.references[name] = this.cache.tempId;
+            delete this.cache.tempId;
+            return item;
+        },
+        getObject: function(name)
+        {
+            return this[this.references[name]] || delete this.references[name];
+        },
+        removeObject: function(name)
+        {   
+            var toRemove = this.references[name];
+            var success = delete this.references[name];
+
+            return this.remove(toRemove) && success;
+        },
+        forEach: function(callback)
+        {
+            for(var i in this)
+            {
+                callback(this[i], i, this);
+            }
+
+            return this;
+        },
+        define: function(key, prop)
+        {
+            Object.defineProperty(this, key,  
+            {
+                enumerable: false,
+                writable: true,
+                configurable: true,
+                value: prop
+            });
+        }
+    };
+
+    if(object.apply === undefined)
+    {
+        system.add = function()
+        {
+            var id = this.cache.highest + 1;
+            if(this.cache.lowest !== undefined && !this.unique)
+            {
+                id = this.cache.lowest;
+                this.cache.lowest = undefined;
+            }
+            if(id > this.cache.highest)
+            {
+                this.cache.highest = id;
+            }
+            this.cache.tempId = id;
+
+            this[id] = arguments[0];
+            this[id]._name = this.cache.tempName || this.name;
+            this[id]._arrayName = this._name;
+            this[id]._id = id;
+            return this[id];
+        };
+    }
+
+    // Add methods and properties from system to keypairs/associative array that will be returned
+    for(var i in system)
+    {
+        Object.defineProperty(keypairs, i,  
+        {
+            enumerable: false,
+            writable: true,
+            configurable: true,
+            value: system[i]
+        });
+    }
+
+    return keypairs;
+}
+
+module.exports = createAA;
 
 /***/ })
 

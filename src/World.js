@@ -1,5 +1,7 @@
 let Camera = require("./Camera.js");
 let CameraGrid = require("./CameraGrid.js");
+let GameObjectHandler = require("./GameObjectHandler");
+let createAA = require("./createAA.js");
 
 function World(config)
 {
@@ -15,6 +17,7 @@ function World(config)
         config.grid.cell.width, 
         config.grid.cell.height
     );
+    let gameObjectHandler = new GameObjectHandler();
 
     if(typeof config.level === "undefined" || typeof config.level.bounds === "undefined")
     {
@@ -30,14 +33,15 @@ function World(config)
         camera.bounds.maxY = config.level.bounds.maxY;
     }
 
+    var round = Math.round;
+    var min = Math.min;
+    var max = Math.max;
+
     var cameraTracker = {};
     cameraTracker.update = function()
     {
         // Note: Keep this out of the camera!
         var camBox = camera.boundingBox;
-        var round = Math.round;
-        var min = Math.min;
-        var max = Math.max;
         var cg = cameraGrid;
 
         // Todo: get rid of the bounds restrainment (min/max functions) and keep the camera in the world/grid 
@@ -59,9 +63,35 @@ function World(config)
     this.step = function()
     {
         camera.update();
-
         cameraTracker.update();
+
+        gameObjectHandler.window(
+            cameraGrid.grid,
+            cameraTracker.upperLeftCol, 
+            cameraTracker.upperLeftRow, 
+            cameraTracker.lowerRightCol, 
+            cameraTracker.lowerRightRow
+        );
+
+        for(var i = 0; i < arguments.length; i++)
+        {
+
+        }
     };
+
+    // DEV only!
+    this.exposeInternals = function()
+    {
+        return { 
+            camera: camera,
+            cameraGrid: cameraGrid,
+            gameObjectHandler: gameObjectHandler,
+            cameraTracker: cameraTracker
+        };
+    };
+
+    this.utils = {};
+    this.utils.createAA = createAA;
 
     this.cam = {};
     this.cam.setFocus = function(x, y, name)
@@ -109,6 +139,10 @@ function World(config)
             cameraTracker.lowerRightRow,
             callback
         );
+    };
+    this.grid.addReference = function(object)
+    { 
+        cameraGrid.addRef(object);
     };
 }
 

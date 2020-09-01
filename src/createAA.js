@@ -1,5 +1,3 @@
-"use strict";
-
 /**
  * @function `createAA` Creates a key value pair system or associative array with methods
  * 
@@ -13,14 +11,13 @@ function createAA(object, keypairs, arrayName)
 {
     if(typeof keypairs !== "object")
     {
-        keypairs = {};
+        keypairs = Object.create(null);
     }
 
     arrayName = arrayName || object.name.charAt(0).toUpperCase() + object.name.slice(1);
 
     /**
      * All the methods and properties that are **NOT** part of the data that will be stored in `keypairs`
-     * 
      */
     var system = {
         cache: {
@@ -28,7 +25,7 @@ function createAA(object, keypairs, arrayName)
             highest: -1, // highest index
         },
         references: {},
-
+        _name: arrayName,
         // Any thing added to this `add` method must also be added to the `add` method in the `if` statement
         add: function()
         {
@@ -48,6 +45,9 @@ function createAA(object, keypairs, arrayName)
             var item = Object.create(object.prototype);
             object.apply(item, arguments);
             this[id] = item;
+            this[id]._name = this.cache.tempName || this.name;
+            this[id]._arrayName = this._name;
+            this[id]._id = id;
             return item;
         },
         remove: function(id)
@@ -70,18 +70,23 @@ function createAA(object, keypairs, arrayName)
                 return;
             }
             
-            var item = this.add.apply(this, Array.prototype.slice.call(arguments).slice(1));
+            var args = Array.prototype.slice.call(arguments);
+            this.cache.tempName = args.shift();
+            var item = this.add.apply(this, args);
             this.references[name] = this.cache.tempId;
             delete this.cache.tempId;
             return item;
         },
         getObject: function(name)
         {
-            return this[this.references[name]];
+            return this[this.references[name]] || delete this.references[name];
         },
         removeObject: function(name)
-        {
-            return this.remove(this.references[name]) && delete this.references[name];
+        {   
+            var toRemove = this.references[name];
+            var success = delete this.references[name];
+
+            return this.remove(toRemove) && success;
         },
         forEach: function(callback)
         {
@@ -91,6 +96,16 @@ function createAA(object, keypairs, arrayName)
             }
 
             return this;
+        },
+        define: function(key, prop)
+        {
+            Object.defineProperty(this, key,  
+            {
+                enumerable: false,
+                writable: true,
+                configurable: true,
+                value: prop
+            });
         }
     };
 
@@ -99,7 +114,6 @@ function createAA(object, keypairs, arrayName)
         system.add = function()
         {
             var id = this.cache.highest + 1;
-
             if(this.cache.lowest !== undefined && !this.unique)
             {
                 id = this.cache.lowest;
@@ -109,10 +123,12 @@ function createAA(object, keypairs, arrayName)
             {
                 this.cache.highest = id;
             }
-
             this.cache.tempId = id;
 
             this[id] = arguments[0];
+            this[id]._name = this.cache.tempName || this.name;
+            this[id]._arrayName = this._name;
+            this[id]._id = id;
             return this[id];
         };
     }
@@ -131,3 +147,5 @@ function createAA(object, keypairs, arrayName)
 
     return keypairs;
 }
+
+module.exports = createAA;

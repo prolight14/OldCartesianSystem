@@ -56,23 +56,40 @@ var player = {
 
 world.cam.setFocus(player.x, player.y, "player");
 
-var Pig = function(x, y, weight)
+var Rect = function(x, y, width, height)
 {
     this.x = x;
     this.y = y;
-    this.weight = weight;
+    this.width = width;
+    this.height = height;
 
-    this.draw = function()
+    this.body = {
+        moves: false,
+        boundingBox: {
+            minX: x,
+            minY: y,
+            maxX: x + width,
+            maxY: y + height
+        },
+        updateBoundingBox: function()
+        {
+            var box = this.boundingBox;
+            box.minX = x;
+            box.minY = y;
+            box.maxX = x + width;
+            box.maxY = y + height;
+        }
+    };
+
+    this.update = function()
     {
-        console.log("Drawing not yet supported.");
+        
     };
 };
-Pig.prototype.getWeightInQuarters = function()
-{
-    return this.weight * (1 / 4);
-};
 
-var pigs = createAA(Pig);
+var rects = world.utils.createAA(Rect);
+
+world.grid.addReference(rects.add(200, 124, 80, 40));
 
 var loop = function()
 {

@@ -49,8 +49,11 @@ function Camera(windowX, windowY, windowWidth, windowHeight)
     };
     this.updateFocus = function(x, y)
     {
-        focusObject.x = x;
-        focusObject.y = y;
+        if(focusObject)
+        {
+            focusObject.x = x;
+            focusObject.y = y;
+        }
     };
     this.getFocus = function()
     {
