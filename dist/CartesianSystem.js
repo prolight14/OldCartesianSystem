@@ -324,9 +324,9 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
 
         var col, row;
 
-        for(col = minCol; col < maxCol; col++)
+        for(col = minCol; col <= maxCol; col++)
         {
-            for(row = minRow; row < maxRow; row++)
+            for(row = minRow; row <= maxRow; row++)
             {
                 this.grid[col][row].refs[key] = toSet;
             }
@@ -349,9 +349,9 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
 
         var col, row;
 
-        for(col = minCol; col < maxCol; col++)
+        for(col = minCol; col <= maxCol; col++)
         {
-            for(row = minRow; row < maxRow; row++)
+            for(row = minRow; row <= maxRow; row++)
             {
                 delete this.grid[col][row].refs[key];
             }
@@ -624,7 +624,7 @@ function createAA(object, keypairs, arrayName)
         keypairs = Object.create(null);
     }
 
-    arrayName = arrayName || object.name.charAt(0).toUpperCase() + object.name.slice(1);
+    arrayName = arrayName || object.name.charAt(0).toLowerCase() + object.name.slice(1);
 
     /**
      * All the methods and properties that are **NOT** part of the data that will be stored in `keypairs`

@@ -81,9 +81,9 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
 
         var col, row;
 
-        for(col = minCol; col < maxCol; col++)
+        for(col = minCol; col <= maxCol; col++)
         {
-            for(row = minRow; row < maxRow; row++)
+            for(row = minRow; row <= maxRow; row++)
             {
                 this.grid[col][row].refs[key] = toSet;
             }
@@ -106,9 +106,9 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
 
         var col, row;
 
-        for(col = minCol; col < maxCol; col++)
+        for(col = minCol; col <= maxCol; col++)
         {
-            for(row = minRow; row < maxRow; row++)
+            for(row = minRow; row <= maxRow; row++)
             {
                 delete this.grid[col][row].refs[key];
             }
