@@ -262,14 +262,18 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
 
         var cols = this.cols;
         var rows = this.rows;
-        var i, cell;
+        var i, j;
 
         for(i = 0; i < cols; i++)
         {
+            this.grid.push([]);
             // Create a cell with no __proto__ object
-            cell = Object.create(null);
-            cell.refs = Object.create(null);
-            this.grid.push(Array(rows).fill(cell));
+            for(j = 0; j < rows; j++)
+            {
+                var cell = Object.create(null);
+                cell.refs = Object.create(null);
+                this.grid[i][j] = cell;
+            }
         }
         
         this.minCol = 0;
@@ -285,7 +289,7 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
      * @method CameraGrid#getCoorssFast
      * @returns {object} col and row
      */
-    this.getCoorsFast = function()
+    this.getCoorsFast = function(x, y)
     {
         return {
             col: round((x - this.halfCellWidth) / this.cellWidth),
@@ -299,7 +303,7 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
      * @method CameraGrid#getCoors
      * @returns {object} col and row
      */
-    this.getCoors = function()
+    this.getCoors = function(x, y)
     {
         return {
             col: max(min(round((x - this.halfCellWidth) / this.cellWidth), this.maxCol), this.minCol),
@@ -317,10 +321,10 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
 
         var box = object.body.boundingBox;
 
-        var minCol = min(max(round((box.minX - this.halfCellWidth) / this.cellWidth), this.minCol), this.maxCol),
-            minRow = min(max(round((box.minY - this.halfCellHeight) / this.cellHeight), this.minRow), this.maxRow),
-            maxCol = min(max(round((box.maxX - this.halfCellWidth) / this.cellWidth), this.minCol), this.maxCol),
-            maxRow = min(max(round((box.maxY - this.halfCellHeight) / this.cellHeight), this.minRow), this.maxRow);
+        var minCol = max(min(round((box.minX - this.halfCellWidth) / this.cellWidth), this.maxCol), this.minCol),
+            minRow = max(min(round((box.minY - this.halfCellHeight) / this.cellHeight), this.maxRow), this.minRow),
+            maxCol = max(min(round((box.maxX - this.halfCellWidth) / this.cellWidth), this.maxCol), this.minCol),
+            maxRow = max(min(round((box.maxY - this.halfCellHeight) / this.cellHeight), this.maxRow), this.minRow);
 
         var col, row;
 
@@ -338,7 +342,7 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
         object._maxRow = maxRow;
     };
 
-    this.removeRef = function()
+    this.removeRef = function(object)
     {
         var key = object._arrayName + object._id;
 
@@ -407,34 +411,92 @@ var createAA = __webpack_require__(/*! ./createAA.js */ "./createAA.js");
 function GameObjectHandler()
 {
     var gameObjects = createAA([], undefined, "gameObjects");
-    var used = Object.create(null);
 
-    this.window = function(grid, minCol, minRow, maxCol, maxRow) 
+    // used for loop (mainly so we don't use an object again)
+    var usedFL = {};
+    // Will be used as a cache to contain all the stuff we need to process
+    var used = {};
+
+    this.addArray = function(name, gameObjectArray)
     {
-        var col, row, cell, i;
+        return gameObjects.addObject(name, gameObjectArray);
+    };
+    
+    // Gets all 
+    this.window = function(cameraGrid, minCol, minRow, maxCol, maxRow) 
+    {
+        usedFL = {};
+        used = {};
 
-        for(col = minCol; col < maxCol; col++)
+        var grid = cameraGrid.grid;
+
+        var col, row, refs, i, object, id;
+
+        // Loop through grid
+        for(col = minCol; col <= maxCol; col++)
         {
-            for(row = minRow; row < maxRow; row++)
+            for(row = minRow; row <= maxRow; row++)
             {
-                cell = grid[col][row];
+                refs = grid[col][row].refs;
 
-                for(i in cell.refs)
+                // Loop through cell references
+                for(i in refs)
                 {
+                    // We already recorded key (`object._arrayName + object._id`), so don't do it again since some 
+                    // objects can be in multiple cells at a time
+                    if(usedFL[i])
+                    {
+                        continue;
+                    }
 
+                    // Is the same as createAA#getObject(name)
+                    object = gameObjects[gameObjects.references[refs[i].arrayName]][refs[i].id];
+
+                    // Save info for rendering
+                    id = gameObjects.references[object._arrayName];
+                    used[id] = used[id] === undefined ? [] : used[id];
+                    used[id].push(object._id);
+
+                    // Show we've recorded the key (`object._arrayName + object._id`)
+                    usedFL[i] = true;
                 }
             }
         }
     };
 
-    this.act = function(key)
+    this.act = function(cameraGrid, key)
     {
+        var i, j, object;
 
+        for(i in used)
+        {
+            for(j = 0; j < used[i].length; j++)
+            {
+                object = gameObjects[i][used[i][j]];
+
+                object[key]();
+
+                // Refreshes the object's cell place after it has been moved 
+                if(object.body.moved)
+                {
+                    cameraGrid.removeRef(object);
+                    cameraGrid.addRef(object);
+                }
+            }
+        }
     };
 
     this.eachObjectsInCamera = function(callback)
     {
+        var i, j;
 
+        for(i in used)
+        {
+            for(j = 0; j < used[i].length; j++)
+            {
+                callback(gameObjects[i][used[i][j]]);
+            }
+        }
     };
 }
 
@@ -517,7 +579,7 @@ function World(config)
         cameraTracker.update();
 
         gameObjectHandler.window(
-            cameraGrid.grid,
+            cameraGrid,
             cameraTracker.upperLeftCol, 
             cameraTracker.upperLeftRow, 
             cameraTracker.lowerRightCol, 
@@ -526,7 +588,7 @@ function World(config)
 
         for(var i = 0; i < arguments.length; i++)
         {
-
+            gameObjectHandler.act(cameraGrid, arguments[i]);
         }
     };
 
@@ -541,8 +603,56 @@ function World(config)
         };
     };
 
-    this.utils = {};
-    this.utils.createAA = createAA;
+    this.add = {};
+    this.add.gameObjectArray = function(object, arrayName)
+    {
+        if(arrayName === undefined) { arrayName = object.name.charAt(0).toLowerCase() + object.name.slice(1); }
+
+        var array = gameObjectHandler.addArray(arrayName, createAA(object, undefined, arrayName));
+
+        var lastAdd = array.add;
+        Object.defineProperty(array, "add", 
+        {
+            enumerable: false,
+            writable: true,
+            configurable: true,
+            value: function()
+            {
+                var gameObject = lastAdd.apply(this, arguments);
+                cameraGrid.addRef(gameObject);
+                return gameObject;
+            }
+        });
+
+        return array;
+    };
+
+    // Todo maybe make createAA static
+    // this.utils = {};
+    // this.utils.createAA = createAA;
+
+    // Maybe todo: Move these to World.prototype
+    this.grid = {};
+    this.grid.getCell = function(x, y)
+    {
+        var pos = cameraGrid.getCoors(x, y);
+
+        return cameraGrid.grid[pos.col][pos.row];
+    };
+    this.grid.loopThroughVisibleCells = function(callback)
+    {
+        cameraGrid.loopWithin(
+            cameraTracker.upperLeftCol,
+            cameraTracker.upperLeftRow,
+            cameraTracker.lowerRightCol,
+            cameraTracker.lowerRightRow,
+            callback
+        );
+    };
+    // this.grid.addReference = function(object)
+    // { 
+    //     cameraGrid.addRef(object);
+    // };
 
     this.cam = {};
     this.cam.setFocus = function(x, y, name)
@@ -578,22 +688,6 @@ function World(config)
     this.cam.getBounds = function()
     {
         return camera.bounds;
-    };
-
-    this.grid = {};
-    this.grid.loopThroughVisibleCells = function(callback)
-    {
-        cameraGrid.loopWithin(
-            cameraTracker.upperLeftCol,
-            cameraTracker.upperLeftRow,
-            cameraTracker.lowerRightCol,
-            cameraTracker.lowerRightRow,
-            callback
-        );
-    };
-    this.grid.addReference = function(object)
-    { 
-        cameraGrid.addRef(object);
     };
 }
 

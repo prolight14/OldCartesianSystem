@@ -19,14 +19,18 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
 
         var cols = this.cols;
         var rows = this.rows;
-        var i, cell;
+        var i, j;
 
         for(i = 0; i < cols; i++)
         {
+            this.grid.push([]);
             // Create a cell with no __proto__ object
-            cell = Object.create(null);
-            cell.refs = Object.create(null);
-            this.grid.push(Array(rows).fill(cell));
+            for(j = 0; j < rows; j++)
+            {
+                var cell = Object.create(null);
+                cell.refs = Object.create(null);
+                this.grid[i][j] = cell;
+            }
         }
         
         this.minCol = 0;
@@ -42,7 +46,7 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
      * @method CameraGrid#getCoorssFast
      * @returns {object} col and row
      */
-    this.getCoorsFast = function()
+    this.getCoorsFast = function(x, y)
     {
         return {
             col: round((x - this.halfCellWidth) / this.cellWidth),
@@ -56,7 +60,7 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
      * @method CameraGrid#getCoors
      * @returns {object} col and row
      */
-    this.getCoors = function()
+    this.getCoors = function(x, y)
     {
         return {
             col: max(min(round((x - this.halfCellWidth) / this.cellWidth), this.maxCol), this.minCol),
@@ -74,10 +78,10 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
 
         var box = object.body.boundingBox;
 
-        var minCol = min(max(round((box.minX - this.halfCellWidth) / this.cellWidth), this.minCol), this.maxCol),
-            minRow = min(max(round((box.minY - this.halfCellHeight) / this.cellHeight), this.minRow), this.maxRow),
-            maxCol = min(max(round((box.maxX - this.halfCellWidth) / this.cellWidth), this.minCol), this.maxCol),
-            maxRow = min(max(round((box.maxY - this.halfCellHeight) / this.cellHeight), this.minRow), this.maxRow);
+        var minCol = max(min(round((box.minX - this.halfCellWidth) / this.cellWidth), this.maxCol), this.minCol),
+            minRow = max(min(round((box.minY - this.halfCellHeight) / this.cellHeight), this.maxRow), this.minRow),
+            maxCol = max(min(round((box.maxX - this.halfCellWidth) / this.cellWidth), this.maxCol), this.minCol),
+            maxRow = max(min(round((box.maxY - this.halfCellHeight) / this.cellHeight), this.maxRow), this.minRow);
 
         var col, row;
 
@@ -95,7 +99,7 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
         object._maxRow = maxRow;
     };
 
-    this.removeRef = function()
+    this.removeRef = function(object)
     {
         var key = object._arrayName + object._id;
 

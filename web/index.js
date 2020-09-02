@@ -19,10 +19,10 @@ window.addEventListener('keyup', keyReleased, false);
 let config = {
     camera: {
         window: {
-            x: 30,
-            y: 40,
-            width: canvas.width - 60,
-            height: canvas.height - 80
+            x: 70,
+            y: 60,
+            width: canvas.width - 140,
+            height: canvas.height - 120
         }
     },
     // level: {
@@ -63,8 +63,10 @@ var Rect = function(x, y, width, height)
     this.width = width;
     this.height = height;
 
+    var that = this;
+
     this.body = {
-        moves: false,
+        moved: true,
         boundingBox: {
             minX: x,
             minY: y,
@@ -74,22 +76,43 @@ var Rect = function(x, y, width, height)
         updateBoundingBox: function()
         {
             var box = this.boundingBox;
-            box.minX = x;
-            box.minY = y;
-            box.maxX = x + width;
-            box.maxY = y + height;
+            box.minX = that.x;
+            box.minY = that.y;
+            box.maxX = that.x + that.width;
+            box.maxY = that.y + that.height;
         }
     };
 
+    lastMoveTime: Date.now();
+
     this.update = function()
     {
-        
+        // lastMoveTime
+
+        var dir = Math.atan2(player.y - this.y, player.x - this.x);
+
+        this.x += Math.cos(dir) * 5;
+        this.y += Math.sin(dir) * 5;
+
+        this.body.updateBoundingBox();
+    };
+
+    this.draw = function()
+    {
+        ctx.fillStyle = "green";
+        ctx.fillRect(this.x, this.y, this.width, this.height);
     };
 };
 
-var rects = world.utils.createAA(Rect);
+var rects = world.add.gameObjectArray(Rect);
 
-world.grid.addReference(rects.add(200, 124, 80, 40));
+rects.add(180, 124, 80, 40);
+rects.add(600, 230, 120, 30);
+
+// for(var i = 0; i < 400; i++)
+// {
+//     rects.add(Math.random() * , 700, 23, 23);
+// }
 
 var loop = function()
 {
@@ -122,7 +145,7 @@ var loop = function()
 
     world.cam.updateFocus(player.x, player.y);
 
-    world.step();
+    world.step("update", "draw");
 
     ctx.strokeStyle = "white";
     ctx.lineWidth = 2;
@@ -155,6 +178,9 @@ var loop = function()
         config.camera.window.width, 
         config.camera.window.height
     );
+
+    ctx.font = "20px Georgia";
+    ctx.fillText(Object.keys(world.grid.getCell(player.x, player.y).refs).join("\n"), 10, 50);
 
     window.requestAnimationFrame(loop);
 };

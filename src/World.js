@@ -66,7 +66,7 @@ function World(config)
         cameraTracker.update();
 
         gameObjectHandler.window(
-            cameraGrid.grid,
+            cameraGrid,
             cameraTracker.upperLeftCol, 
             cameraTracker.upperLeftRow, 
             cameraTracker.lowerRightCol, 
@@ -75,7 +75,7 @@ function World(config)
 
         for(var i = 0; i < arguments.length; i++)
         {
-
+            gameObjectHandler.act(cameraGrid, arguments[i]);
         }
     };
 
@@ -90,8 +90,56 @@ function World(config)
         };
     };
 
-    this.utils = {};
-    this.utils.createAA = createAA;
+    this.add = {};
+    this.add.gameObjectArray = function(object, arrayName)
+    {
+        if(arrayName === undefined) { arrayName = object.name.charAt(0).toLowerCase() + object.name.slice(1); }
+
+        var array = gameObjectHandler.addArray(arrayName, createAA(object, undefined, arrayName));
+
+        var lastAdd = array.add;
+        Object.defineProperty(array, "add", 
+        {
+            enumerable: false,
+            writable: true,
+            configurable: true,
+            value: function()
+            {
+                var gameObject = lastAdd.apply(this, arguments);
+                cameraGrid.addRef(gameObject);
+                return gameObject;
+            }
+        });
+
+        return array;
+    };
+
+    // Todo maybe make createAA static
+    // this.utils = {};
+    // this.utils.createAA = createAA;
+
+    // Maybe todo: Move these to World.prototype
+    this.grid = {};
+    this.grid.getCell = function(x, y)
+    {
+        var pos = cameraGrid.getCoors(x, y);
+
+        return cameraGrid.grid[pos.col][pos.row];
+    };
+    this.grid.loopThroughVisibleCells = function(callback)
+    {
+        cameraGrid.loopWithin(
+            cameraTracker.upperLeftCol,
+            cameraTracker.upperLeftRow,
+            cameraTracker.lowerRightCol,
+            cameraTracker.lowerRightRow,
+            callback
+        );
+    };
+    // this.grid.addReference = function(object)
+    // { 
+    //     cameraGrid.addRef(object);
+    // };
 
     this.cam = {};
     this.cam.setFocus = function(x, y, name)
@@ -127,22 +175,6 @@ function World(config)
     this.cam.getBounds = function()
     {
         return camera.bounds;
-    };
-
-    this.grid = {};
-    this.grid.loopThroughVisibleCells = function(callback)
-    {
-        cameraGrid.loopWithin(
-            cameraTracker.upperLeftCol,
-            cameraTracker.upperLeftRow,
-            cameraTracker.lowerRightCol,
-            cameraTracker.lowerRightRow,
-            callback
-        );
-    };
-    this.grid.addReference = function(object)
-    { 
-        cameraGrid.addRef(object);
     };
 }
 
