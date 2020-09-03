@@ -1,5 +1,8 @@
 var CartesianSystem = {
-    World: require("./World.js")
+    World: require("./World.js"),
+    Utils: {
+        CreateAA: require("./createAA.js")
+    }
 };
 
 // Export it

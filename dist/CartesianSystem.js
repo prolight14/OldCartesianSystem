@@ -388,7 +388,10 @@ module.exports = CameraGrid;
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {var CartesianSystem = {
-    World: __webpack_require__(/*! ./World.js */ "./World.js")
+    World: __webpack_require__(/*! ./World.js */ "./World.js"),
+    Utils: {
+        CreateAA: __webpack_require__(/*! ./createAA.js */ "./createAA.js")
+    }
 };
 
 // Export it
@@ -592,17 +595,6 @@ function World(config)
         }
     };
 
-    // DEV only!
-    this.exposeInternals = function()
-    {
-        return { 
-            camera: camera,
-            cameraGrid: cameraGrid,
-            gameObjectHandler: gameObjectHandler,
-            cameraTracker: cameraTracker
-        };
-    };
-
     this.add = {};
     this.add.gameObjectArray = function(object, arrayName)
     {
@@ -619,24 +611,59 @@ function World(config)
             value: function()
             {
                 var gameObject = lastAdd.apply(this, arguments);
+
                 cameraGrid.addRef(gameObject);
                 return gameObject;
+            }
+        });
+        var lastAddObject = array.addObject;
+        Object.defineProperty(array, "addObject", 
+        {
+            enumerable: false,
+            writable: true,
+            configurable: true,
+            value: function()
+            {
+                var gameObject = lastAddObject.apply(this, arguments);
+                if(!gameObject) { return; }
+
+                cameraGrid.addRef(gameObject);
+                return gameObject;
+            }
+        });
+
+        var lastRemove = array.remove;
+        Object.defineProperty(array, "remove",  
+        {
+            enumerable: false,
+            writable: true,
+            configurable: true,
+            value: function(id)
+            {
+                cameraGrid.removeRef(this[id]);
+                return lastRemove.apply(this, arguments);
+            }
+        });
+         var lastRemoveObject = array.removeObject;
+        Object.defineProperty(array, "removeObject",  
+        {
+            enumerable: false,
+            writable: true,
+            configurable: true,
+            value: function(name)
+            {
+                cameraGrid.removeRef(this[this.references[name]]);
+                return lastRemoveObject.apply(this, arguments);
             }
         });
 
         return array;
     };
 
-    // Todo maybe make createAA static
-    // this.utils = {};
-    // this.utils.createAA = createAA;
-
-    // Maybe todo: Move these to World.prototype
     this.grid = {};
     this.grid.getCell = function(x, y)
     {
         var pos = cameraGrid.getCoors(x, y);
-
         return cameraGrid.grid[pos.col][pos.row];
     };
     this.grid.loopThroughVisibleCells = function(callback)
@@ -649,10 +676,6 @@ function World(config)
             callback
         );
     };
-    // this.grid.addReference = function(object)
-    // { 
-    //     cameraGrid.addRef(object);
-    // };
 
     this.cam = {};
     this.cam.setFocus = function(x, y, name)
@@ -688,6 +711,17 @@ function World(config)
     this.cam.getBounds = function()
     {
         return camera.bounds;
+    };
+
+    // DEV only!
+    this.exposeInternals = function()
+    {
+        return { 
+            camera: camera,
+            cameraGrid: cameraGrid,
+            gameObjectHandler: gameObjectHandler,
+            cameraTracker: cameraTracker
+        };
     };
 }
 

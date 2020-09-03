@@ -56,6 +56,8 @@ var player = {
 
 world.cam.setFocus(player.x, player.y, "player");
 
+var bounds = world.cam.getBounds();
+
 var Rect = function(x, y, width, height)
 {
     this.x = x;
@@ -83,18 +85,51 @@ var Rect = function(x, y, width, height)
         }
     };
 
-    lastMoveTime: Date.now();
+    var lastMoveTime = Date.now();
+
+    var driftX = -5 + Math.random() * 10;
+    var driftY = -5 + Math.random() * 10;
 
     this.update = function()
     {
-        // lastMoveTime
+        if(Date.now() - lastMoveTime > 5000)
+        {
+            driftX = -5 + Math.random() * 10;
+            driftY = -5 + Math.random() * 10;
 
-        var dir = Math.atan2(player.y - this.y, player.x - this.x);
+            lastMoveTime = Date.now();
+        }
 
-        this.x += Math.cos(dir) * 5;
-        this.y += Math.sin(dir) * 5;
+        this.x += driftX * 0.1;
+        this.y += driftY * 0.1;
 
         this.body.updateBoundingBox();
+
+        var box = this.body.boundingBox;
+        if(box.maxX < bounds.minX)
+        {
+            this.x = bounds.maxX - 1;
+
+            this.body.updateBoundingBox();
+        }   
+        if(box.maxY < bounds.minY)
+        {
+            this.y = bounds.maxY - 1;
+
+            this.body.updateBoundingBox();
+        }  
+        if(box.minX > bounds.maxX)
+        {
+            this.x = bounds.minX - this.width + 1;
+
+            this.body.updateBoundingBox();
+        }  
+        if(box.minY > bounds.maxY)
+        {
+            this.y = bounds.minY - this.height + 1;
+
+            this.body.updateBoundingBox();
+        }    
     };
 
     this.draw = function()
@@ -105,14 +140,21 @@ var Rect = function(x, y, width, height)
 };
 
 var rects = world.add.gameObjectArray(Rect);
-
 rects.add(180, 124, 80, 40);
 rects.add(600, 230, 120, 30);
 
 // for(var i = 0; i < 400; i++)
 // {
-//     rects.add(Math.random() * , 700, 23, 23);
+//     var w = 15 + Math.random() * 20;
+//     var h = 15 + Math.random() * 20;
+
+//     rects.add(w / 2 + Math.random() * (bounds.maxX - bounds.minX - w), h / 2 +Math.random() * (bounds.maxY - bounds.minY - h), w, h);
 // }
+
+var mouse = {
+    x: 0,
+    y: 0
+};
 
 var loop = function()
 {
@@ -179,10 +221,42 @@ var loop = function()
         config.camera.window.height
     );
 
+    ctx.fillStyle = "white";
     ctx.font = "20px Georgia";
-    ctx.fillText(Object.keys(world.grid.getCell(player.x, player.y).refs).join("\n"), 10, 50);
+
+    var camScroll = world.cam.getScroll();
+    var camWindow = config.camera.window;
+    var targetX = camScroll.x - camWindow.width / 2 - camWindow.x + mouse.x;
+    var targetY = camScroll.y - camWindow.height / 2 - camWindow.y + mouse.y;
+
+    ctx.fillText(targetX.toFixed(3) + ", " + targetY.toFixed(3), 10, 20);
+
+    var cellIds = Object.keys(world.grid.getCell(targetX, targetY).refs);
+    for(var i = 0; i < cellIds.length; i++)
+    {
+        ctx.fillText(cellIds[i], 10, 50 + i * 20);
+    }
 
     window.requestAnimationFrame(loop);
 };
 window.requestAnimationFrame(loop);
 
+canvas.addEventListener("mousedown", (event) =>
+{
+    var rect = canvas.getBoundingClientRect();
+
+    mouse = {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+    };
+});
+
+canvas.addEventListener("mousemove", (event) =>
+{   
+    var rect = canvas.getBoundingClientRect();
+
+    mouse = {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+    };
+});
