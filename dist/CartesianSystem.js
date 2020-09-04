@@ -141,8 +141,8 @@ function Camera(windowX, windowY, windowWidth, windowHeight)
     this.windowY = windowY;
     this.windowWidth = windowWidth;
     this.windowHeight = windowHeight;
-    this.halfWindowWidth = this.windowWidth / 2;
-    this.halfWindowHeight = this.windowHeight / 2;
+    this.halfWindowWidth = windowWidth / 2;
+    this.halfWindowHeight = windowHeight / 2;
 
     // Needed for moving the camera
     this.scrollX = this.halfWindowWidth;
@@ -165,6 +165,16 @@ function Camera(windowX, windowY, windowWidth, windowHeight)
         maxY: this.scrollY + this.halfWindowHeight
     };
 
+    this.resize = function(windowX, windowY, windowWidth, windowHeight)
+    {
+        this.windowX = windowX;
+        this.windowY = windowY;
+        this.windowWidth = windowWidth;
+        this.windowHeight = windowHeight;
+        this.halfWindowWidth = windowWidth / 2;
+        this.halfWindowHeight = windowHeight / 2;
+    };
+    
     var focusObject;
 
     this.update = function()
@@ -199,6 +209,13 @@ function Camera(windowX, windowY, windowWidth, windowHeight)
     {
         focusObject = undefined;
     };
+    this.getScroll = function()
+    {
+        return {
+            x: this.scrollX,
+            y: this.scrollY
+        };
+    };
 
     this.getTranslateValues = function()
     {
@@ -212,6 +229,7 @@ Camera.prototype.scroll = function(x, y)
 {
     // Move direction and move magnitude
     // These will be used to move the scroll of the camera 
+
     var moveDir = Math.atan2(y - this.scrollY, x - this.scrollX);
     var moveMag = Math.sqrt(Math.pow(x - this.scrollX, 2) + Math.pow(y - this.scrollY, 2)) * this.scrollSpeed;
 
@@ -578,9 +596,6 @@ function World(config)
 
     this.step = function()
     {
-        camera.update();
-        cameraTracker.update();
-
         gameObjectHandler.window(
             cameraGrid,
             cameraTracker.upperLeftCol, 
@@ -593,6 +608,12 @@ function World(config)
         {
             gameObjectHandler.act(cameraGrid, arguments[i]);
         }
+    };
+
+    this.update = function()
+    {
+        this.cam.update();
+        this.step.apply(this, arguments);
     };
 
     this.add = {};
@@ -644,7 +665,7 @@ function World(config)
                 return lastRemove.apply(this, arguments);
             }
         });
-         var lastRemoveObject = array.removeObject;
+        var lastRemoveObject = array.removeObject;
         Object.defineProperty(array, "removeObject",  
         {
             enumerable: false,
@@ -675,9 +696,23 @@ function World(config)
             cameraTracker.lowerRightRow,
             callback
         );
+
+        return this;
+    };
+    this.grid.refreshReferences = function(object)
+    {
+        cameraGrid.removeRef(object);
+        cameraGrid.addRef(object);
+
+        return this;
     };
 
     this.cam = {};
+    this.cam.update = function()
+    {
+        camera.update();
+        cameraTracker.update();
+    };
     this.cam.setFocus = function(x, y, name)
     {
         camera.setFocus(x, y, name);
@@ -699,10 +734,7 @@ function World(config)
     };
     this.cam.getScroll = function()
     {
-        return { 
-            x: camera.scrollX, 
-            y: camera.scrollY
-        };
+        return camera.getScroll();
     };
     this.cam.getTranslateValues = function()
     {
@@ -711,6 +743,56 @@ function World(config)
     this.cam.getBounds = function()
     {
         return camera.bounds;
+    };
+    this.cam.getWindow = function()
+    {
+        return {
+            x: camera.windowX,
+            y: camera.windowY,
+            width: camera.windowWidth,
+            height: camera.windowHeight
+        };
+    };
+    this.cam.resize = function(windowX, windowY, windowWidth, windowHeight)
+    {
+        camera.resize(windowX, windowY, windowWidth, windowHeight);
+        return this;
+    };
+    this.cam.getWindowX = function()
+    {
+        return camera.windowX;
+    };
+    this.cam.getWindowY = function()
+    {
+        return camera.windowY;
+    };
+    this.cam.getWindowWidth = function()
+    {
+        return camera.windowWidth;
+    };
+    this.cam.getWindowHeight = function()
+    {
+        return camera.windowHeight;
+    };
+    this.cam.setWindowX = function(x)
+    {
+        camera.windowX = x;
+        return this;
+    };
+    this.cam.setWindowY = function(y)
+    {
+        camera.windowY = y;
+        return this;
+    };
+    this.cam.setWindowWidth = function(width)
+    {
+        camera.windowWidth = width;
+        return this;
+    };
+    this.cam.setWindowHeight = function(height)
+    {
+        camera.windowHeight = height;
+        return this;
     };
 
     // DEV only!

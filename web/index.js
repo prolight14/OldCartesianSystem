@@ -3,18 +3,8 @@
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 
-var keys = {};
-function keyPressed(event)
-{
-    keys[event.key] = true;
-}
-function keyReleased(event)
-{
-    keys[event.key] = false;
-}
-
-window.addEventListener('keydown', keyPressed, false);
-window.addEventListener('keyup', keyReleased, false);
+let canvas2 = document.getElementById("canvas2");
+let ctx2 = canvas2.getContext("2d");
 
 let config = {
     camera: {
@@ -37,8 +27,8 @@ let config = {
         rows: 12,
         cols: 12,
         cell: {
-            height: 280,
-            width: 280
+            height: 300,
+            width: 300
         }
     },
 };
@@ -52,6 +42,11 @@ console.log(world);
 var player = {
     x: 140,
     y: 140
+};
+
+var player2 = {
+    x: 300,
+    y: 300
 };
 
 world.cam.setFocus(player.x, player.y, "player");
@@ -137,33 +132,56 @@ var Rect = function(x, y, width, height)
         ctx.fillStyle = "green";
         ctx.fillRect(this.x, this.y, this.width, this.height);
     };
+
+    this.draw2 = function()
+    {
+        ctx2.fillStyle = "green";
+        ctx2.fillRect(this.x, this.y, this.width, this.height);
+    };
 };
 
 var rects = world.add.gameObjectArray(Rect);
 rects.add(180, 124, 80, 40);
 rects.add(600, 230, 120, 30);
 
-// for(var i = 0; i < 400; i++)
-// {
-//     var w = 15 + Math.random() * 20;
-//     var h = 15 + Math.random() * 20;
+for(var i = 0; i < 400; i++)
+{
+    var w = 15 + Math.random() * 20;
+    var h = 15 + Math.random() * 20;
 
-//     rects.add(w / 2 + Math.random() * (bounds.maxX - bounds.minX - w), h / 2 +Math.random() * (bounds.maxY - bounds.minY - h), w, h);
-// }
+    rects.add(w / 2 + Math.random() * (bounds.maxX - bounds.minX - w), h / 2 +Math.random() * (bounds.maxY - bounds.minY - h), w, h);
+}
 
 var mouse = {
     x: 0,
     y: 0
 };
+world.cam.setFocus(player.x, player.y, "player");
 
-var loop = function()
+function runCanvas1()
 {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    world.cam.resize(
+        config.camera.window.x,
+        config.camera.window.y,
+        config.camera.window.width,
+        config.camera.window.height,
+    );
+    world.cam.setFocus(player.x, player.y, "player");
+
+    // world.cam.updateFocus(player.x, player.y);
+    world.cam.update();
+
     var translateValues = world.cam.getTranslateValues();
     ctx.translate(translateValues.x, translateValues.y);
+
+    if(keys["q"])
+    {
+        console.log(translateValues);
+    }
 
     ctx.fillStyle = "blue";
     ctx.fillRect(player.x - 10, player.y - 10, 20, 20);
@@ -184,8 +202,6 @@ var loop = function()
     {
         player.y += 5;
     }
-
-    world.cam.updateFocus(player.x, player.y);
 
     world.step("update", "draw");
 
@@ -212,13 +228,13 @@ var loop = function()
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
+    var camwin = world.cam.getWindow();
+
     ctx.lineWidth = 2;
 
     ctx.strokeRect(
-        config.camera.window.x, 
-        config.camera.window.y, 
-        config.camera.window.width, 
-        config.camera.window.height
+        camwin.x, camwin.y,
+        camwin.width, camwin.height
     );
 
     ctx.fillStyle = "white";
@@ -236,6 +252,64 @@ var loop = function()
     {
         ctx.fillText(cellIds[i], 10, 50 + i * 20);
     }
+}
+
+var loop = function()
+{
+    runCanvas1();
+
+    ////////////////////////////////////////////////////////////////
+
+    ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+    ctx2.fillStyle = "black";
+    ctx2.fillRect(0, 0, canvas2.width, canvas2.height);
+
+    world.cam.resize(100, 100, canvas2.width - 200, canvas2.height - 200);
+
+    world.cam.setFocus(player2.x, player2.y, "player2");
+    world.cam.update();
+
+    var translateValues = world.cam.getTranslateValues();
+    ctx2.translate(translateValues.x, translateValues.y);
+
+    if(keys[" "])
+    {
+        console.log(translateValues);
+    }
+
+    ctx2.fillStyle = "red";
+    ctx2.fillRect(player2.x - 12, player2.y - 12, 24, 24);
+
+    if(keys.ArrowLeft)
+    {
+        player2.x -= 5;
+    }
+    if(keys.ArrowRight)
+    {
+        player2.x += 5;
+    }
+    if(keys.ArrowUp)
+    {
+        player2.y -= 5;
+    }
+    if(keys.ArrowDown)
+    {
+        player2.y += 5;
+    }
+
+    world.step("draw2");
+
+    ctx2.setTransform(1, 0, 0, 1, 0, 0);
+
+    var camwin = world.cam.getWindow();
+
+    ctx2.strokeStyle = "white";
+    ctx2.lineWidth = 2;
+
+    ctx2.strokeRect(
+        camwin.x, camwin.y,
+        camwin.width, camwin.height
+    );
 
     window.requestAnimationFrame(loop);
 };
@@ -260,3 +334,16 @@ canvas.addEventListener("mousemove", (event) =>
         y: event.clientY - rect.top
     };
 });
+
+var keys = {};
+function keyPressed(event)
+{
+    keys[event.key] = true;
+}
+function keyReleased(event)
+{
+    keys[event.key] = false;
+}
+
+window.addEventListener('keydown', keyPressed, false);
+window.addEventListener('keyup', keyReleased, false);

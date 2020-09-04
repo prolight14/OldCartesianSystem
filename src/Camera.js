@@ -5,8 +5,8 @@ function Camera(windowX, windowY, windowWidth, windowHeight)
     this.windowY = windowY;
     this.windowWidth = windowWidth;
     this.windowHeight = windowHeight;
-    this.halfWindowWidth = this.windowWidth / 2;
-    this.halfWindowHeight = this.windowHeight / 2;
+    this.halfWindowWidth = windowWidth / 2;
+    this.halfWindowHeight = windowHeight / 2;
 
     // Needed for moving the camera
     this.scrollX = this.halfWindowWidth;
@@ -29,6 +29,16 @@ function Camera(windowX, windowY, windowWidth, windowHeight)
         maxY: this.scrollY + this.halfWindowHeight
     };
 
+    this.resize = function(windowX, windowY, windowWidth, windowHeight)
+    {
+        this.windowX = windowX;
+        this.windowY = windowY;
+        this.windowWidth = windowWidth;
+        this.windowHeight = windowHeight;
+        this.halfWindowWidth = windowWidth / 2;
+        this.halfWindowHeight = windowHeight / 2;
+    };
+    
     var focusObject;
 
     this.update = function()
@@ -63,6 +73,13 @@ function Camera(windowX, windowY, windowWidth, windowHeight)
     {
         focusObject = undefined;
     };
+    this.getScroll = function()
+    {
+        return {
+            x: this.scrollX,
+            y: this.scrollY
+        };
+    };
 
     this.getTranslateValues = function()
     {
@@ -76,6 +93,7 @@ Camera.prototype.scroll = function(x, y)
 {
     // Move direction and move magnitude
     // These will be used to move the scroll of the camera 
+
     var moveDir = Math.atan2(y - this.scrollY, x - this.scrollX);
     var moveMag = Math.sqrt(Math.pow(x - this.scrollX, 2) + Math.pow(y - this.scrollY, 2)) * this.scrollSpeed;
 
