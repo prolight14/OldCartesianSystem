@@ -1,6 +1,6 @@
 {
   "name": "cartesiansystem",
-  "version": "1.0.0-alpha",
+  "version": "1.0.0-beta",
   "description": "A spatial partitioning system plugin for phaser 3",
   "main": "index.js",
   "scripts": {

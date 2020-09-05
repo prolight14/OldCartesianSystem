@@ -23,8 +23,8 @@ let config = {
         }
     },
     grid: {
-        rows: 12,
-        cols: 12,
+        rows: 256,
+        cols: 256,
         cell: {
             height: 300,
             width: 300
@@ -32,9 +32,7 @@ let config = {
     },
 };
 
-let world = new CartesianSystem.World(config);
-
-world.init();
+let world = new CartesianSystem.World(config).init();
 
 var Rect = function(x, y, width, height)
 {
@@ -118,7 +116,7 @@ var Player = function(x, y, width, height)
 var blocks = world.add.gameObjectArray(Block);
 
 var worldBounds = world.cam.getBounds();
-for(var i = 0; i < 400; i++)
+for(var i = 0; i < 500000; i++)
 {
     var w = 15 + Math.random() * 20;
     var h = 15 + Math.random() * 20;

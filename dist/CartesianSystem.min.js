@@ -607,6 +607,8 @@ function World(config)
 
         // You can't initalize more than once (kinda like a singleton)
         delete this.init;
+
+        return this;
     };
 
     this.step = function()
@@ -623,12 +625,16 @@ function World(config)
         {
             gameObjectHandler.act(cameraGrid, arguments[i]);
         }
+
+        return this;
     };
 
     this.update = function()
     {
         this.cam.update();
         this.step.apply(this, arguments);
+
+        return this;
     };
 
     this.add = {};
