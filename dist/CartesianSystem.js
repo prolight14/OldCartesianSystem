@@ -207,6 +207,7 @@ function Camera(windowX, windowY, windowWidth, windowHeight)
     };
     this.removeFocus = function()
     {
+        delete this.scrolls[name];
         focusObject = undefined;
     };
     this.getScroll = function()
