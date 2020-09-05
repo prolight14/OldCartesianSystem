@@ -45,7 +45,7 @@ function Camera(windowX, windowY, windowWidth, windowHeight)
     {
         if(focusObject)
         {
-            this.scroll(focusObject.x, focusObject.y);
+            this.scroll(focusObject.x, focusObject.y, focusObject.name);
         }
     };
 
@@ -81,6 +81,8 @@ function Camera(windowX, windowY, windowWidth, windowHeight)
         };
     };
 
+    this.scrolls = {};
+
     this.getTranslateValues = function()
     {
         return {
@@ -89,17 +91,29 @@ function Camera(windowX, windowY, windowWidth, windowHeight)
         };
     };
 }
-Camera.prototype.scroll = function(x, y)
+Camera.prototype.scroll = function(x, y, name)
 {
+    if(!this.scrolls[name])
+    {
+        this.scrolls[name] = {
+            x: this.scrollX,
+            y: this.scrollY
+        };
+    }
+
+    var scroll = this.scrolls[name];
+
     // Move direction and move magnitude
     // These will be used to move the scroll of the camera 
-
-    var moveDir = Math.atan2(y - this.scrollY, x - this.scrollX);
-    var moveMag = Math.sqrt(Math.pow(x - this.scrollX, 2) + Math.pow(y - this.scrollY, 2)) * this.scrollSpeed;
+    var moveDir = Math.atan2(y - scroll.y, x - scroll.x);
+    var moveMag = Math.sqrt(Math.pow(x - scroll.x, 2) + Math.pow(y - scroll.y, 2)) * this.scrollSpeed;
 
     // Move camera in both x and y components
-    this.scrollX += moveMag * Math.cos(moveDir);
-    this.scrollY += moveMag * Math.sin(moveDir);
+    scroll.x += moveMag * Math.cos(moveDir);
+    scroll.y += moveMag * Math.sin(moveDir);
+
+    this.scrollX = scroll.x;
+    this.scrollY = scroll.y;
 
     // Keep it within bounds
     this.scrollX = Math.min(Math.max(this.scrollX, this.bounds.minX + this.halfWindowWidth), this.bounds.maxX - this.halfWindowWidth);
