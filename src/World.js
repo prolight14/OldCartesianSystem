@@ -45,10 +45,10 @@ function World(config)
         var cg = cameraGrid;
 
         // Todo: get rid of the bounds restrainment (min/max functions) and keep the camera in the world/grid 
-        this.upperLeftCol = min(max(round((camBox.minX - cg.halfCellWidth) / cg.cellWidth), cg.minCol), cg.maxCol);
-        this.upperLeftRow = min(max(round((camBox.minY - cg.halfCellHeight) / cg.cellHeight), cg.minRow), cg.maxRow);
-        this.lowerRightCol = min(max(round((camBox.maxX - cg.halfCellWidth) / cg.cellWidth), cg.minCol), cg.maxCol);
-        this.lowerRightRow = min(max(round((camBox.maxY - cg.halfCellHeight) / cg.cellHeight), cg.minRow), cg.maxRow);
+        this.minCol = min(max(round((camBox.minX - cg.halfCellWidth) / cg.cellWidth), cg.minCol), cg.maxCol);
+        this.minRow = min(max(round((camBox.minY - cg.halfCellHeight) / cg.cellHeight), cg.minRow), cg.maxRow);
+        this.maxCol = min(max(round((camBox.maxX - cg.halfCellWidth) / cg.cellWidth), cg.minCol), cg.maxCol);
+        this.maxRow = min(max(round((camBox.maxY - cg.halfCellHeight) / cg.cellHeight), cg.minRow), cg.maxRow);
     };
 
     this.init = function()
@@ -66,10 +66,10 @@ function World(config)
     {
         gameObjectHandler.window(
             cameraGrid,
-            cameraTracker.upperLeftCol, 
-            cameraTracker.upperLeftRow, 
-            cameraTracker.lowerRightCol, 
-            cameraTracker.lowerRightRow
+            cameraTracker.minCol, 
+            cameraTracker.minRow, 
+            cameraTracker.maxCol, 
+            cameraTracker.maxRow
         );
 
         for(var i = 0; i < arguments.length; i++)
@@ -79,7 +79,6 @@ function World(config)
 
         return this;
     };
-
     this.update = function()
     {
         this.cam.update();
@@ -153,6 +152,19 @@ function World(config)
         return array;
     };
 
+    this.get = {};
+    this.get.gameObjectArray = function(arrayName)
+    {
+        return gameObjectHandler.getArray(arrayName);
+    };
+
+    this.remove = {};
+    this.remove.gameObjectArray = function(arrayName)
+    {
+        cameraGrid.removeAll(arrayName);
+        gameObjectHandler.removeArray(arrayName);
+    };
+
     this.grid = {};
     this.grid.getCell = function(x, y)
     {
@@ -161,13 +173,24 @@ function World(config)
     };
     this.grid.loopThroughVisibleCells = function(callback)
     {
-        cameraGrid.loopWithin(
-            cameraTracker.upperLeftCol,
-            cameraTracker.upperLeftRow,
-            cameraTracker.lowerRightCol,
-            cameraTracker.lowerRightRow,
+        cameraGrid.loopThroughVisibleCells(
+            cameraTracker.minCol,
+            cameraTracker.minRow,
+            cameraTracker.maxCol,
+            cameraTracker.maxRow,
             callback
         );
+
+        return this;
+    };
+    this.grid.loopThroughAllCells = function(callback)
+    {
+        cameraGrid.loopThroughAllCells(callback);
+        return this;
+    };
+    this.grid.addToAllCells = function(name, property)
+    {
+        cameraGrid.addToAllCells(name, property);
 
         return this;
     };
@@ -228,7 +251,6 @@ function World(config)
     this.cam.resize = function(windowX, windowY, windowWidth, windowHeight)
     {
         camera.resize(windowX, windowY, windowWidth, windowHeight);
-        return this;
     };
     this.cam.getWindowX = function()
     {

@@ -14,7 +14,8 @@ module.exports = {
 
     entry: {
         CartesianSystem: "./CartesianSystem.js",
-        "CartesianSystem.min": "./CartesianSystem.js"
+        "CartesianSystem.min": "./CartesianSystem.js",
+        
     },
 
     output: {
@@ -22,6 +23,9 @@ module.exports = {
         filename: "[name].js",
         library: "CartesianSystem",
         libraryTarget: "umd",
+        sourceMapFilename: '[file].map',
         umdNamedDefine: true
     },
+
+    devtool: 'source-map'
 };

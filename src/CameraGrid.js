@@ -16,20 +16,18 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
     this.reset = function()
     {
         this.grid.length = 0;
-
+    
         var cols = this.cols;
         var rows = this.rows;
         var i, j;
-
+    
         for(i = 0; i < cols; i++)
         {
             this.grid.push([]);
             // Create a cell with no __proto__ object
             for(j = 0; j < rows; j++)
             {
-                var cell = Object.create(null);
-                cell.refs = Object.create(null);
-                this.grid[i][j] = cell;
+                this.grid[i][j] = Object.create(null);
             }
         }
         
@@ -89,7 +87,7 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
         {
             for(row = minRow; row <= maxRow; row++)
             {
-                this.grid[col][row].refs[key] = toSet;
+                this.grid[col][row][key] = toSet;
             }
         }
 
@@ -114,20 +112,74 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
         {
             for(row = minRow; row <= maxRow; row++)
             {
-                delete this.grid[col][row].refs[key];
+                delete this.grid[col][row][key];
             }
         }
     };
 
-    this.loopWithin = function(upperLeftCol, upperLeftRow, lowerRightCol, lowerRightRow, callback)
+    this.loopThroughVisibleCells = function(minCol, minRow, maxCol, maxRow, callback)
     {
         var col, row;
 
-        for(col = upperLeftCol; col <= lowerRightCol; col++)
+        for(col = minCol; col <= maxCol; col++)
         {
-            for(row = upperLeftRow; row <= lowerRightRow; row++)
+            for(row = minRow; row <= maxRow; row++)
             {
                 callback(this.grid[col][row], col, row);
+            }
+        }
+    };
+
+    this.loopThroughAllCells = function(callback)
+    {
+        var col, row;
+
+        for(col = this.minCol; col <= this.maxCol; col++)
+        {
+            for(row = this.minRow; row <= this.maxRow; row++)
+            {
+                callback(this.grid[col][row], col, row);
+            }
+        }
+    };
+
+    this.addToAllCells = function(name, property)
+    {
+        var col, row;
+
+        for(col = this.minCol; col <= this.maxCol; col++)
+        {
+            for(row = this.minRow; row <= this.maxRow; row++)
+            {
+                Object.defineProperty(this.grid[col][row], name, 
+                {
+                    enumerable: false,
+                    writable: true,
+                    configurable: true,
+                    value: property
+                });
+            }
+        }
+    };
+
+    // Will be expensive since this applies to the entire grid
+    this.removeAll = function(arrayToRemove)
+    {
+        var col, row, cell, i;
+
+        for(col = this.minCol; col <= this.maxCol; col++)
+        {
+            for(row = this.minRow; row <= this.maxRow; row++)
+            {
+                cell = this.grid[col][row];
+
+                for(i in cell)
+                {
+                    if(cell[i].arrayName === arrayToRemove)
+                    {
+                        delete cell[i];
+                    }
+                }
             }
         }
     };

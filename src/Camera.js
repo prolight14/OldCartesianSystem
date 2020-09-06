@@ -28,16 +28,6 @@ function Camera(windowX, windowY, windowWidth, windowHeight)
         maxX: this.scrollX + this.halfWindowWidth,
         maxY: this.scrollY + this.halfWindowHeight
     };
-
-    this.resize = function(windowX, windowY, windowWidth, windowHeight)
-    {
-        this.windowX = windowX;
-        this.windowY = windowY;
-        this.windowWidth = windowWidth;
-        this.windowHeight = windowHeight;
-        this.halfWindowWidth = windowWidth / 2;
-        this.halfWindowHeight = windowHeight / 2;
-    };
     
     var focusObject;
 
@@ -125,6 +115,15 @@ Camera.prototype.scroll = function(x, y, name)
     this.boundingBox.minY = this.scrollY - this.halfWindowHeight;
     this.boundingBox.maxX = this.scrollX + this.halfWindowWidth;
     this.boundingBox.maxY = this.scrollY + this.halfWindowHeight;
+};
+Camera.prototype.resize = function(windowX, windowY, windowWidth, windowHeight)
+{
+    this.windowX = windowX;
+    this.windowY = windowY;
+    this.windowWidth = windowWidth;
+    this.windowHeight = windowHeight;
+    this.halfWindowWidth = windowWidth / 2;
+    this.halfWindowHeight = windowHeight / 2;
 };
 
 module.exports = Camera;

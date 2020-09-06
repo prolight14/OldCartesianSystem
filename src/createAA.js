@@ -25,6 +25,7 @@ function createAA(object, keypairs, arrayName)
             highest: -1, // highest index
         },
         references: {},
+        length: 0,
         _name: arrayName,
         // Any thing added to this `add` method must also be added to the `add` method in the `if` statement
         add: function()
@@ -41,6 +42,7 @@ function createAA(object, keypairs, arrayName)
                 this.cache.highest = id;
             }
             this.cache.tempId = id;
+            this.length++;
 
             var item = Object.create(object.prototype);
             object.apply(item, arguments);
@@ -52,6 +54,11 @@ function createAA(object, keypairs, arrayName)
         },
         remove: function(id)
         {
+            if(this[id] === undefined)
+            {
+                return false;
+            }
+
             if(id === this.cache.highest)
             {
                 this.cache.highest--;
@@ -61,6 +68,7 @@ function createAA(object, keypairs, arrayName)
                 this.cache.lowest = id;
             }
 
+            this.length--;
             return delete this[id];
         },
         addObject: function(name)

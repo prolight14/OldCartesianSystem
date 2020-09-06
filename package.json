@@ -2,10 +2,12 @@
   "name": "cartesiansystem",
   "version": "1.0.0-beta",
   "description": "A spatial partitioning system plugin for phaser 3",
-  "main": "index.js",
+  "main": "dist/CartesianSystem.js",
+  "types": "dist/CartesianSystem.d.ts",
   "scripts": {
     "test": "jest",
-    "build": "webpack"
+    "build": "webpack",
+    "tsc": "tsc --declarationFile"
   },
   "repository": {
     "type": "git",
@@ -25,6 +27,8 @@
   "homepage": "https://github.com/prolight14/CartesianSystem#readme",
   "dependencies": {},
   "devDependencies": {
+    "jest": "^26.4.2",
+    "typescript": "^4.0.2",
     "webpack": "^4.44.1",
     "webpack-cli": "^3.3.12"
   }

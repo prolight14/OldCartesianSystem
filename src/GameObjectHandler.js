@@ -14,6 +14,16 @@ function GameObjectHandler()
         return gameObjects.addObject(name, gameObjectArray);
     };
     
+    this.getArray = function(name)
+    {
+        return gameObjects.getObject(name);
+    };
+
+    this.removeArray = function(name)
+    {
+        return gameObjects.removeObject(name);
+    };
+
     // Gets all 
     this.window = function(cameraGrid, minCol, minRow, maxCol, maxRow) 
     {
@@ -22,17 +32,17 @@ function GameObjectHandler()
 
         var grid = cameraGrid.grid;
 
-        var col, row, refs, i, object, id;
+        var col, row, cell, i, object, id;
 
         // Loop through grid
         for(col = minCol; col <= maxCol; col++)
         {
             for(row = minRow; row <= maxRow; row++)
             {
-                refs = grid[col][row].refs;
+                cell = grid[col][row];
 
-                // Loop through cell references
-                for(i in refs)
+                // Loop through the cell
+                for(i in cell)
                 {
                     // We already recorded key (`object._arrayName + object._id`), so don't do it again since some 
                     // objects can be in multiple cells at a time
@@ -42,7 +52,7 @@ function GameObjectHandler()
                     }
 
                     // Is the same as createAA#getObject(name)
-                    object = gameObjects[gameObjects.references[refs[i].arrayName]][refs[i].id];
+                    object = gameObjects[gameObjects.references[cell[i].arrayName]][cell[i].id];
 
                     // Save info for rendering
                     id = gameObjects.references[object._arrayName];

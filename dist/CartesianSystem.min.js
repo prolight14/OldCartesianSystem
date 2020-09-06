@@ -164,16 +164,6 @@ function Camera(windowX, windowY, windowWidth, windowHeight)
         maxX: this.scrollX + this.halfWindowWidth,
         maxY: this.scrollY + this.halfWindowHeight
     };
-
-    this.resize = function(windowX, windowY, windowWidth, windowHeight)
-    {
-        this.windowX = windowX;
-        this.windowY = windowY;
-        this.windowWidth = windowWidth;
-        this.windowHeight = windowHeight;
-        this.halfWindowWidth = windowWidth / 2;
-        this.halfWindowHeight = windowHeight / 2;
-    };
     
     var focusObject;
 
@@ -262,6 +252,15 @@ Camera.prototype.scroll = function(x, y, name)
     this.boundingBox.maxX = this.scrollX + this.halfWindowWidth;
     this.boundingBox.maxY = this.scrollY + this.halfWindowHeight;
 };
+Camera.prototype.resize = function(windowX, windowY, windowWidth, windowHeight)
+{
+    this.windowX = windowX;
+    this.windowY = windowY;
+    this.windowWidth = windowWidth;
+    this.windowHeight = windowHeight;
+    this.halfWindowWidth = windowWidth / 2;
+    this.halfWindowHeight = windowHeight / 2;
+};
 
 module.exports = Camera;
 
@@ -292,20 +291,18 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
     this.reset = function()
     {
         this.grid.length = 0;
-
+    
         var cols = this.cols;
         var rows = this.rows;
         var i, j;
-
+    
         for(i = 0; i < cols; i++)
         {
             this.grid.push([]);
             // Create a cell with no __proto__ object
             for(j = 0; j < rows; j++)
             {
-                var cell = Object.create(null);
-                cell.refs = Object.create(null);
-                this.grid[i][j] = cell;
+                this.grid[i][j] = Object.create(null);
             }
         }
         
@@ -365,7 +362,7 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
         {
             for(row = minRow; row <= maxRow; row++)
             {
-                this.grid[col][row].refs[key] = toSet;
+                this.grid[col][row][key] = toSet;
             }
         }
 
@@ -390,20 +387,74 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
         {
             for(row = minRow; row <= maxRow; row++)
             {
-                delete this.grid[col][row].refs[key];
+                delete this.grid[col][row][key];
             }
         }
     };
 
-    this.loopWithin = function(upperLeftCol, upperLeftRow, lowerRightCol, lowerRightRow, callback)
+    this.loopThroughVisibleCells = function(minCol, minRow, maxCol, maxRow, callback)
     {
         var col, row;
 
-        for(col = upperLeftCol; col <= lowerRightCol; col++)
+        for(col = minCol; col <= maxCol; col++)
         {
-            for(row = upperLeftRow; row <= lowerRightRow; row++)
+            for(row = minRow; row <= maxRow; row++)
             {
                 callback(this.grid[col][row], col, row);
+            }
+        }
+    };
+
+    this.loopThroughAllCells = function(callback)
+    {
+        var col, row;
+
+        for(col = this.minCol; col <= this.maxCol; col++)
+        {
+            for(row = this.minRow; row <= this.maxRow; row++)
+            {
+                callback(this.grid[col][row], col, row);
+            }
+        }
+    };
+
+    this.addToAllCells = function(name, property)
+    {
+        var col, row;
+
+        for(col = this.minCol; col <= this.maxCol; col++)
+        {
+            for(row = this.minRow; row <= this.maxRow; row++)
+            {
+                Object.defineProperty(this.grid[col][row], name, 
+                {
+                    enumerable: false,
+                    writable: true,
+                    configurable: true,
+                    value: property
+                });
+            }
+        }
+    };
+
+    // Will be expensive since this applies to the entire grid
+    this.removeAll = function(arrayToRemove)
+    {
+        var col, row, cell, i;
+
+        for(col = this.minCol; col <= this.maxCol; col++)
+        {
+            for(row = this.minRow; row <= this.maxRow; row++)
+            {
+                cell = this.grid[col][row];
+
+                for(i in cell)
+                {
+                    if(cell[i].arrayName === arrayToRemove)
+                    {
+                        delete cell[i];
+                    }
+                }
             }
         }
     };
@@ -458,6 +509,16 @@ function GameObjectHandler()
         return gameObjects.addObject(name, gameObjectArray);
     };
     
+    this.getArray = function(name)
+    {
+        return gameObjects.getObject(name);
+    };
+
+    this.removeArray = function(name)
+    {
+        return gameObjects.removeObject(name);
+    };
+
     // Gets all 
     this.window = function(cameraGrid, minCol, minRow, maxCol, maxRow) 
     {
@@ -466,17 +527,17 @@ function GameObjectHandler()
 
         var grid = cameraGrid.grid;
 
-        var col, row, refs, i, object, id;
+        var col, row, cell, i, object, id;
 
         // Loop through grid
         for(col = minCol; col <= maxCol; col++)
         {
             for(row = minRow; row <= maxRow; row++)
             {
-                refs = grid[col][row].refs;
+                cell = grid[col][row];
 
-                // Loop through cell references
-                for(i in refs)
+                // Loop through the cell
+                for(i in cell)
                 {
                     // We already recorded key (`object._arrayName + object._id`), so don't do it again since some 
                     // objects can be in multiple cells at a time
@@ -486,7 +547,7 @@ function GameObjectHandler()
                     }
 
                     // Is the same as createAA#getObject(name)
-                    object = gameObjects[gameObjects.references[refs[i].arrayName]][refs[i].id];
+                    object = gameObjects[gameObjects.references[cell[i].arrayName]][cell[i].id];
 
                     // Save info for rendering
                     id = gameObjects.references[object._arrayName];
@@ -594,10 +655,10 @@ function World(config)
         var cg = cameraGrid;
 
         // Todo: get rid of the bounds restrainment (min/max functions) and keep the camera in the world/grid 
-        this.upperLeftCol = min(max(round((camBox.minX - cg.halfCellWidth) / cg.cellWidth), cg.minCol), cg.maxCol);
-        this.upperLeftRow = min(max(round((camBox.minY - cg.halfCellHeight) / cg.cellHeight), cg.minRow), cg.maxRow);
-        this.lowerRightCol = min(max(round((camBox.maxX - cg.halfCellWidth) / cg.cellWidth), cg.minCol), cg.maxCol);
-        this.lowerRightRow = min(max(round((camBox.maxY - cg.halfCellHeight) / cg.cellHeight), cg.minRow), cg.maxRow);
+        this.minCol = min(max(round((camBox.minX - cg.halfCellWidth) / cg.cellWidth), cg.minCol), cg.maxCol);
+        this.minRow = min(max(round((camBox.minY - cg.halfCellHeight) / cg.cellHeight), cg.minRow), cg.maxRow);
+        this.maxCol = min(max(round((camBox.maxX - cg.halfCellWidth) / cg.cellWidth), cg.minCol), cg.maxCol);
+        this.maxRow = min(max(round((camBox.maxY - cg.halfCellHeight) / cg.cellHeight), cg.minRow), cg.maxRow);
     };
 
     this.init = function()
@@ -615,10 +676,10 @@ function World(config)
     {
         gameObjectHandler.window(
             cameraGrid,
-            cameraTracker.upperLeftCol, 
-            cameraTracker.upperLeftRow, 
-            cameraTracker.lowerRightCol, 
-            cameraTracker.lowerRightRow
+            cameraTracker.minCol, 
+            cameraTracker.minRow, 
+            cameraTracker.maxCol, 
+            cameraTracker.maxRow
         );
 
         for(var i = 0; i < arguments.length; i++)
@@ -628,7 +689,6 @@ function World(config)
 
         return this;
     };
-
     this.update = function()
     {
         this.cam.update();
@@ -702,6 +762,19 @@ function World(config)
         return array;
     };
 
+    this.get = {};
+    this.get.gameObjectArray = function(arrayName)
+    {
+        return gameObjectHandler.getArray(arrayName);
+    };
+
+    this.remove = {};
+    this.remove.gameObjectArray = function(arrayName)
+    {
+        cameraGrid.removeAll(arrayName);
+        gameObjectHandler.removeArray(arrayName);
+    };
+
     this.grid = {};
     this.grid.getCell = function(x, y)
     {
@@ -710,13 +783,24 @@ function World(config)
     };
     this.grid.loopThroughVisibleCells = function(callback)
     {
-        cameraGrid.loopWithin(
-            cameraTracker.upperLeftCol,
-            cameraTracker.upperLeftRow,
-            cameraTracker.lowerRightCol,
-            cameraTracker.lowerRightRow,
+        cameraGrid.loopThroughVisibleCells(
+            cameraTracker.minCol,
+            cameraTracker.minRow,
+            cameraTracker.maxCol,
+            cameraTracker.maxRow,
             callback
         );
+
+        return this;
+    };
+    this.grid.loopThroughAllCells = function(callback)
+    {
+        cameraGrid.loopThroughAllCells(callback);
+        return this;
+    };
+    this.grid.addToAllCells = function(name, property)
+    {
+        cameraGrid.addToAllCells(name, property);
 
         return this;
     };
@@ -777,7 +861,6 @@ function World(config)
     this.cam.resize = function(windowX, windowY, windowWidth, windowHeight)
     {
         camera.resize(windowX, windowY, windowWidth, windowHeight);
-        return this;
     };
     this.cam.getWindowX = function()
     {
@@ -866,6 +949,7 @@ function createAA(object, keypairs, arrayName)
             highest: -1, // highest index
         },
         references: {},
+        length: 0,
         _name: arrayName,
         // Any thing added to this `add` method must also be added to the `add` method in the `if` statement
         add: function()
@@ -882,6 +966,7 @@ function createAA(object, keypairs, arrayName)
                 this.cache.highest = id;
             }
             this.cache.tempId = id;
+            this.length++;
 
             var item = Object.create(object.prototype);
             object.apply(item, arguments);
@@ -893,6 +978,11 @@ function createAA(object, keypairs, arrayName)
         },
         remove: function(id)
         {
+            if(this[id] === undefined)
+            {
+                return false;
+            }
+
             if(id === this.cache.highest)
             {
                 this.cache.highest--;
@@ -902,6 +992,7 @@ function createAA(object, keypairs, arrayName)
                 this.cache.lowest = id;
             }
 
+            this.length--;
             return delete this[id];
         },
         addObject: function(name)

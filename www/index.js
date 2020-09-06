@@ -23,8 +23,8 @@ let config = {
         }
     },
     grid: {
-        rows: 256,
-        cols: 256,
+        rows: 40,
+        cols: 40,
         cell: {
             height: 300,
             width: 300
@@ -115,13 +115,15 @@ var Player = function(x, y, width, height)
 
 var blocks = world.add.gameObjectArray(Block);
 
+Math.seedrandom("world1");
+
 var worldBounds = world.cam.getBounds();
-for(var i = 0; i < 500000; i++)
+for(var i = 0; i < 10000; i++)
 {
     var w = 15 + Math.random() * 20;
     var h = 15 + Math.random() * 20;
 
-    blocks.add(w / 2 + Math.random() * (worldBounds.maxX - worldBounds.minX - w), h / 2 +Math.random() * (worldBounds.maxY - worldBounds.minY - h), w, h);
+    blocks.add(w / 2 + Math.random() * (worldBounds.maxX - worldBounds.minX - w), h / 2 + Math.random() * (worldBounds.maxY - worldBounds.minY - h), w, h);
 }
 
 var players = world.add.gameObjectArray(Player);
@@ -130,21 +132,78 @@ var player1 = players.add(300, 300, 30, 30);
 
 world.cam.setFocus(player1.x, player1.y, "player");
 
-function loop()
-{
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+
+world.grid.loopThroughAllCells(function(cell, col, row)
+{
+    Object.defineProperty(cell, "starSeed",  
+    {
+        enumerable: false,
+        writable: true,
+        configurable: true,
+        value: Math.random()
+    });
+});
+
+// Separated from debug stuff
+function separatedLoop()
+{
     world.cam.updateFocus(player1.x, player1.y);
     world.cam.update();
     var translateValues = world.cam.getTranslateValues();
 
     ctx.translate(translateValues.x, translateValues.y);
 
+    var cellWidth = config.grid.cell.width;
+    var cellHeight = config.grid.cell.height;
+
+    ctx.fillStyle = "white";
+    world.grid.loopThroughVisibleCells(function(cell, col, row)
+    {
+        var rng = new Math.seedrandom(cell.starSeed);
+
+        for(var i = 0; i < 200; i++)
+        {
+            ctx.fillRect(
+                Math.floor(col * cellWidth + cellWidth * rng()), 
+                Math.floor(row * cellHeight + cellHeight * rng()), 
+                1, 
+                1
+            );
+        }
+    });
+
     world.step("update", "draw");
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+var frameTimer = Date.now();
+var fps = 60;
+var lastUpdateFps = Date.now();
+
+function loop()
+{
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    separatedLoop();
+
+    // Debug stuff
+
+    ctx.fillStyle = "white";
+    ctx.font = "20px Georgia";
+
+    if(Date.now() - lastUpdateFps > 350)
+    {
+        fps = (1000 / (Date.now() - frameTimer));
+        lastUpdateFps = Date.now();
+    }
+
+    frameTimer = Date.now();
+
+    ctx.fillText("fps: " + fps.toFixed(5), 20, 20);
 
     window.requestAnimationFrame(loop);
 };
