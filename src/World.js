@@ -62,9 +62,47 @@ function World(config)
         return this;
     };
 
-    this.step = function()
+    var intertermFunction = function()
     {
-        gameObjectHandler.window(
+
+    };
+
+    this.setIntertermFunction = function(callback)
+    {
+        intertermFunction = callback || intertermFunction;
+
+        return this;
+    };
+
+    this.getIntertermFunction = function()
+    {
+        return intertermFunction;
+    };
+
+    this.processOffscreen = function(gameObject)
+    {
+        var ct = cameraTracker;
+
+        // Perform a bounds check to make sure we only add this object to the processList when it's offscreen
+        // So it doesn't happen twice if it is onscreen
+        if(gameObject._maxCol < ct.minCol || gameObject._minCol > ct.maxCol ||
+           gameObject._maxRow < ct.minRow || gameObject._minRow > ct.maxRow)
+        {
+            gameObjectHandler.addToProcessList(
+                cameraGrid,
+                gameObject._minCol,
+                gameObject._minRow,
+                gameObject._maxCol,
+                gameObject._maxRow,
+            );
+        }
+
+        return this;
+    };
+
+    this.processOnscreen = function()
+    {
+        gameObjectHandler.addToProcessList(
             cameraGrid,
             cameraTracker.minCol, 
             cameraTracker.minRow, 
@@ -72,16 +110,27 @@ function World(config)
             cameraTracker.maxRow
         );
 
+        return this;
+    };
+
+    this.step = function()
+    {
         for(var i = 0; i < arguments.length; i++)
         {
             gameObjectHandler.act(cameraGrid, arguments[i]);
         }
 
+        // We don't need this information anymore, get rid of it
+        gameObjectHandler.resetProcessList();
+
         return this;
     };
+
     this.update = function()
     {
         this.cam.update();
+        this.processOnscreen();
+        intertermFunction();
         this.step.apply(this, arguments);
 
         return this;
@@ -151,11 +200,22 @@ function World(config)
 
         return array;
     };
+    this.add.gameObject = function(arrayName)
+    {
+        var gameObjectArray = gameObjectHandler.getArray(arrayName);
+        var gameObject = gameObjectArray.add.apply(gameObjectArray, Array.prototype.slice.call(arguments, 1));
+        cameraGrid.addRef(gameObject);
+        return gameObject;
+    };
 
     this.get = {};
     this.get.gameObjectArray = function(arrayName)
     {
         return gameObjectHandler.getArray(arrayName);
+    };
+    this.get.gameObject = function(arrayName, id)
+    {
+        return gameObjectHandler.getArray(arrayName)[id];
     };
 
     this.remove = {};
@@ -163,6 +223,14 @@ function World(config)
     {
         cameraGrid.removeAll(arrayName);
         gameObjectHandler.removeArray(arrayName);
+        return this;
+    };
+    this.remove.gameObject = function(arrayName, id)
+    {
+        var gameObjectArray = gameObjectHandler.getArray(arrayName);
+        cameraGrid.removeRef(gameObjectArray[id]);
+        gameObjectArray.remove(id);
+        return this;
     };
 
     this.grid = {};
@@ -200,6 +268,10 @@ function World(config)
         cameraGrid.addRef(object);
 
         return this;
+    };
+    this.grid.getCoordinates = function(x, y)
+    {
+        return cameraGrid.getCoors(x, y);
     };
 
     this.cam = {};

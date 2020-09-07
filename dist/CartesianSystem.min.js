@@ -499,7 +499,7 @@ function GameObjectHandler()
 {
     var gameObjects = createAA([], undefined, "gameObjects");
 
-    // used for loop (mainly so we don't use an object again)
+    // Process list used for loop (mainly so we don't use an object again)
     var usedFL = {};
     // Will be used as a cache to contain all the stuff we need to process
     var used = {};
@@ -519,12 +519,14 @@ function GameObjectHandler()
         return gameObjects.removeObject(name);
     };
 
-    // Gets all 
-    this.window = function(cameraGrid, minCol, minRow, maxCol, maxRow) 
+    this.resetProcessList = function()
     {
         usedFL = {};
         used = {};
+    };
 
+    this.addToProcessList = function(cameraGrid, minCol, minRow, maxCol, maxRow) 
+    {
         var grid = cameraGrid.grid;
 
         var col, row, cell, i, object, id;
@@ -579,19 +581,6 @@ function GameObjectHandler()
                     cameraGrid.removeRef(object);
                     cameraGrid.addRef(object);
                 }
-            }
-        }
-    };
-
-    this.eachObjectsInCamera = function(callback)
-    {
-        var i, j;
-
-        for(i in used)
-        {
-            for(j = 0; j < used[i].length; j++)
-            {
-                callback(gameObjects[i][used[i][j]]);
             }
         }
     };
@@ -672,9 +661,47 @@ function World(config)
         return this;
     };
 
-    this.step = function()
+    var intertermFunction = function()
     {
-        gameObjectHandler.window(
+
+    };
+
+    this.setIntertermFunction = function(callback)
+    {
+        intertermFunction = callback || intertermFunction;
+
+        return this;
+    };
+
+    this.getIntertermFunction = function()
+    {
+        return intertermFunction;
+    };
+
+    this.processOffscreen = function(gameObject)
+    {
+        var ct = cameraTracker;
+
+        // Perform a bounds check to make sure we only add this object to the processList when it's offscreen
+        // So it doesn't happen twice if it is onscreen
+        if(gameObject._maxCol < ct.minCol || gameObject._minCol > ct.maxCol ||
+           gameObject._maxRow < ct.minRow || gameObject._minRow > ct.maxRow)
+        {
+            gameObjectHandler.addToProcessList(
+                cameraGrid,
+                gameObject._minCol,
+                gameObject._minRow,
+                gameObject._maxCol,
+                gameObject._maxRow,
+            );
+        }
+
+        return this;
+    };
+
+    this.processOnscreen = function()
+    {
+        gameObjectHandler.addToProcessList(
             cameraGrid,
             cameraTracker.minCol, 
             cameraTracker.minRow, 
@@ -682,16 +709,27 @@ function World(config)
             cameraTracker.maxRow
         );
 
+        return this;
+    };
+
+    this.step = function()
+    {
         for(var i = 0; i < arguments.length; i++)
         {
             gameObjectHandler.act(cameraGrid, arguments[i]);
         }
 
+        // We don't need this information anymore, get rid of it
+        gameObjectHandler.resetProcessList();
+
         return this;
     };
+
     this.update = function()
     {
         this.cam.update();
+        this.processOnscreen();
+        intertermFunction();
         this.step.apply(this, arguments);
 
         return this;
@@ -761,11 +799,22 @@ function World(config)
 
         return array;
     };
+    this.add.gameObject = function(arrayName)
+    {
+        var gameObjectArray = gameObjectHandler.getArray(arrayName);
+        var gameObject = gameObjectArray.add.apply(gameObjectArray, Array.prototype.slice.call(arguments, 1));
+        cameraGrid.addRef(gameObject);
+        return gameObject;
+    };
 
     this.get = {};
     this.get.gameObjectArray = function(arrayName)
     {
         return gameObjectHandler.getArray(arrayName);
+    };
+    this.get.gameObject = function(arrayName, id)
+    {
+        return gameObjectHandler.getArray(arrayName)[id];
     };
 
     this.remove = {};
@@ -773,6 +822,14 @@ function World(config)
     {
         cameraGrid.removeAll(arrayName);
         gameObjectHandler.removeArray(arrayName);
+        return this;
+    };
+    this.remove.gameObject = function(arrayName, id)
+    {
+        var gameObjectArray = gameObjectHandler.getArray(arrayName);
+        cameraGrid.removeRef(gameObjectArray[id]);
+        gameObjectArray.remove(id);
+        return this;
     };
 
     this.grid = {};
@@ -810,6 +867,10 @@ function World(config)
         cameraGrid.addRef(object);
 
         return this;
+    };
+    this.grid.getCoordinates = function(x, y)
+    {
+        return cameraGrid.getCoors(x, y);
     };
 
     this.cam = {};

@@ -4,7 +4,7 @@ function GameObjectHandler()
 {
     var gameObjects = createAA([], undefined, "gameObjects");
 
-    // used for loop (mainly so we don't use an object again)
+    // Process list used for loop (mainly so we don't use an object again)
     var usedFL = {};
     // Will be used as a cache to contain all the stuff we need to process
     var used = {};
@@ -24,12 +24,14 @@ function GameObjectHandler()
         return gameObjects.removeObject(name);
     };
 
-    // Gets all 
-    this.window = function(cameraGrid, minCol, minRow, maxCol, maxRow) 
+    this.resetProcessList = function()
     {
         usedFL = {};
         used = {};
+    };
 
+    this.addToProcessList = function(cameraGrid, minCol, minRow, maxCol, maxRow) 
+    {
         var grid = cameraGrid.grid;
 
         var col, row, cell, i, object, id;
@@ -84,19 +86,6 @@ function GameObjectHandler()
                     cameraGrid.removeRef(object);
                     cameraGrid.addRef(object);
                 }
-            }
-        }
-    };
-
-    this.eachObjectsInCamera = function(callback)
-    {
-        var i, j;
-
-        for(i in used)
-        {
-            for(j = 0; j < used[i].length; j++)
-            {
-                callback(gameObjects[i][used[i][j]]);
             }
         }
     };

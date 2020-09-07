@@ -82,6 +82,8 @@ var Player = function(x, y, width, height)
 {
     Rect.call(this, x, y, width, height);
 
+    this.color = "red";
+
     this.body.moved = true;
 
     this.update = function()
@@ -108,7 +110,7 @@ var Player = function(x, y, width, height)
 
     this.draw = function()
     {
-        ctx.fillStyle = "red";
+        ctx.fillStyle = this.color;
         ctx.fillRect(this.x, this.y, this.width, this.height);
     };
 };
@@ -128,11 +130,30 @@ for(var i = 0; i < 10000; i++)
 
 var players = world.add.gameObjectArray(Player);
 
-var player1 = players.add(300, 300, 30, 30);
+// var player2 = players.add(200, 200, 20, 20);
 
-world.cam.setFocus(player1.x, player1.y, "player");
+// player2.color = "green";
+// player2.update = function()
+// {
+//     if(keys.j)
+//     {
+//         this.x -= 5;
+//     }
+//     if(keys.l)
+//     {
+//         this.x += 5;
+//     }
+//     if(keys.i)
+//     {
+//         this.y -= 5;
+//     }
+//     if(keys.k)
+//     {
+//         this.y += 5;
+//     }
 
-
+//     this.body.updateBoundingBox();
+// };
 
 world.grid.loopThroughAllCells(function(cell, col, row)
 {
@@ -145,11 +166,21 @@ world.grid.loopThroughAllCells(function(cell, col, row)
     });
 });
 
+var player1 = players.add(300, 300, 30, 30);
+
+world.cam.setFocus(player1.x, player1.y, "player");
+
+world.setIntertermFunction(function()
+{
+    var translateValues = world.cam.getTranslateValues();
+    ctx.translate(translateValues.x, translateValues.y);
+});
+
 // Separated from debug stuff
 function separatedLoop()
 {
     world.cam.updateFocus(player1.x, player1.y);
-    world.cam.update();
+    // world.cam.update();
     var translateValues = world.cam.getTranslateValues();
 
     ctx.translate(translateValues.x, translateValues.y);
@@ -173,7 +204,14 @@ function separatedLoop()
         }
     });
 
-    world.step("update", "draw");
+    // world.processOffscreen(player2);
+    // world.step("update");
+    // world.processOnscreen();
+    // world.step("update", "draw");
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    world.update("update", "draw");
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 }
