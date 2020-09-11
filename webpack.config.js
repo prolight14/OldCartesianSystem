@@ -14,8 +14,6 @@ module.exports = {
 
     entry: {
         CartesianSystem: "./CartesianSystem.js",
-        "CartesianSystem.min": "./CartesianSystem.js",
-        
     },
 
     output: {

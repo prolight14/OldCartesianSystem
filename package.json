@@ -6,7 +6,7 @@
   "types": "dist/CartesianSystem.d.ts",
   "scripts": {
     "test": "jest",
-    "build": "webpack",
+    "build": "webpack && ./copyover.sh",
     "tsc": "tsc --declarationFile"
   },
   "repository": {

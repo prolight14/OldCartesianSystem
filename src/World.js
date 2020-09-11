@@ -152,7 +152,6 @@ function World(config)
             value: function()
             {
                 var gameObject = lastAdd.apply(this, arguments);
-
                 cameraGrid.addRef(gameObject);
                 return gameObject;
             }
@@ -166,7 +165,7 @@ function World(config)
             value: function()
             {
                 var gameObject = lastAddObject.apply(this, arguments);
-                if(!gameObject) { return; }
+                if(gameObject === undefined) { return; }
 
                 cameraGrid.addRef(gameObject);
                 return gameObject;

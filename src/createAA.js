@@ -44,10 +44,10 @@ function createAA(object, keypairs, arrayName)
             this.cache.tempId = id;
             this.length++;
 
-            var item = Object.create(object.prototype);
-            object.apply(item, arguments);
+            var item = new (Function.prototype.bind.apply(object, [null].concat(Array.prototype.slice.call(arguments))));
+
             this[id] = item;
-            this[id]._name = this.cache.tempName || this.name;
+            this[id]._name = this.cache.tempName || this._name;
             this[id]._arrayName = this._name;
             this[id]._id = id;
             return item;
@@ -134,7 +134,7 @@ function createAA(object, keypairs, arrayName)
             this.cache.tempId = id;
 
             this[id] = arguments[0];
-            this[id]._name = this.cache.tempName || this.name;
+            this[id]._name = this.cache.tempName || this._name;
             this[id]._arrayName = this._name;
             this[id]._id = id;
             return this[id];
