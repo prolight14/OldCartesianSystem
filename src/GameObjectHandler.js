@@ -81,7 +81,29 @@ function GameObjectHandler()
                 object[key]();
 
                 // Refreshes the object's cell place after it has been moved 
-                if(object.body.moved)
+                if(object.body.moves)
+                {
+                    cameraGrid.removeRef(object);
+                    cameraGrid.addRef(object);
+                }
+            }
+        }
+    };
+
+    this.loopProcessList = function(cameraGrid, callback)
+    {
+        var i, j, object;
+
+        for(i in used)
+        {
+            for(j = 0; j < used[i].length; j++)
+            {
+                object = gameObjects[i][used[i][j]];
+
+                callback(object, gameObjects.references[i], used[i][j]);
+
+                // Refreshes the object's cell place after it has been moved 
+                if(object.body.moves)
                 {
                     cameraGrid.removeRef(object);
                     cameraGrid.addRef(object);

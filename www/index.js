@@ -44,7 +44,7 @@ var Rect = function(x, y, width, height)
     var that = this;
 
     this.body = {
-        moved: false,
+        moves: false,
         boundingBox: {
             minX: x,
             minY: y,
@@ -66,9 +66,27 @@ var Block = function(x, y, width, height)
 {
     Rect.call(this, x, y, width, height);
 
+    this.body.moves = true
+
+    var lastMoveTime = Date.now() + 5000 * Math.random();
+
+    this.vel = {
+        x: Math.random() * 2 - 1,
+        y: Math.random() * 2 - 1
+    };
+
     this.update = function()
     {
+        if(Date.now() - lastMoveTime > 5000)
+        {
+            this.vel = { x: Math.random() * 2 - 1, y: Math.random() * 2 - 1 };
+            lastMoveTime = Date.now();
+        }
 
+        this.x += this.vel.x;
+        this.y += this.vel.y;
+
+        this.body.updateBoundingBox();
     };
 
     this.draw = function()
@@ -84,7 +102,7 @@ var Player = function(x, y, width, height)
 
     this.color = "red";
 
-    this.body.moved = true;
+    this.body.moves = true;
 
     this.update = function()
     {
@@ -120,7 +138,7 @@ var blocks = world.add.gameObjectArray(Block);
 Math.seedrandom("world1");
 
 var worldBounds = world.cam.getBounds();
-for(var i = 0; i < 10000; i++)
+for(var i = 0; i < 4000; i++)
 {
     var w = 15 + Math.random() * 20;
     var h = 15 + Math.random() * 20;
@@ -176,6 +194,8 @@ world.setIntertermFunction(function()
     ctx.translate(translateValues.x, translateValues.y);
 });
 
+var c = 0;  
+
 // Separated from debug stuff
 function separatedLoop()
 {
@@ -211,7 +231,13 @@ function separatedLoop()
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-    world.update("update", "draw");
+    if(c > 5)
+    {
+        world.update("update", "draw");
+    }
+
+    c++;
+
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 }

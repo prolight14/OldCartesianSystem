@@ -113,6 +113,16 @@ function World(config)
         return this;
     };
 
+    this.utils = {};
+    this.utils.loopProcessList = function(callback)
+    {
+        return gameObjectHandler.loopProcessList(cameraGrid, callback);
+    };
+    this.utils.resetProcessList = function()
+    {
+        gameObjectHandler.resetProcessList();
+    };
+
     this.step = function()
     {
         for(var i = 0; i < arguments.length; i++)
@@ -268,9 +278,34 @@ function World(config)
 
         return this;
     };
+    this.grid.getCellFromCoordinates = function(col, row)
+    {
+        return cameraGrid.grid[col][row];
+    };
     this.grid.getCoordinates = function(x, y)
     {
         return cameraGrid.getCoors(x, y);
+    };
+    this.grid.getDimensions = function()
+    {
+        return {
+            cols: cameraGrid.cols,
+            rows: cameraGrid.rows,
+            cellWidth: cameraGrid.cellWidth,
+            cellHeight: cameraGrid.cellHeight
+        };
+    };
+    this.grid.getBounds = function()
+    {
+        var width = cameraGrid.cols * cameraGrid.cellWidth;
+        var height = cameraGrid.rows * cameraGrid.cellHeight;
+
+        return {
+            minX: 0,
+            minY: 0,
+            maxX: width,
+            maxY: height
+        };
     };
 
     this.cam = {};
@@ -308,7 +343,19 @@ function World(config)
     };
     this.cam.getBounds = function()
     {
-        return camera.bounds;
+        return {
+            minX: camera.bounds.minX,
+            minY: camera.bounds.minY,
+            maxX: camera.bounds.maxX,
+            maxY: camera.bounds.maxY
+        };
+    };
+    this.cam.setBounds = function(minX, minY, maxX, maxY)
+    {
+        camera.bounds.minX = minX;
+        camera.bounds.minY = minY;
+        camera.bounds.maxX = maxX;
+        camera.bounds.maxY = maxY;
     };
     this.cam.getWindow = function()
     {
@@ -352,12 +399,22 @@ function World(config)
     this.cam.setWindowWidth = function(width)
     {
         camera.windowWidth = width;
+        camera.halfWindowWidth = width / 2;
         return this;
     };
     this.cam.setWindowHeight = function(height)
     {
         camera.windowHeight = height;
+        camera.halfWindowHeight = height / 2;
         return this;
+    };
+    this.cam.setWindow = function(x, y, width, height)
+    {
+        camera.resize(x, y, width, height);
+    };
+    this.cam.updateBoundingBox = function()
+    {
+        camera.updateBoundingBox();
     };
 
     // DEV only!

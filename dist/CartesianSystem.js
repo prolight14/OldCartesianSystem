@@ -252,6 +252,13 @@ Camera.prototype.scroll = function(x, y, name)
     this.boundingBox.maxX = this.scrollX + this.halfWindowWidth;
     this.boundingBox.maxY = this.scrollY + this.halfWindowHeight;
 };
+Camera.prototype.updateBoundingBox = function()
+{
+    this.boundingBox.minX = this.scrollX - this.halfWindowWidth;
+    this.boundingBox.minY = this.scrollY - this.halfWindowHeight;
+    this.boundingBox.maxX = this.scrollX + this.halfWindowWidth;
+    this.boundingBox.maxY = this.scrollY + this.halfWindowHeight;
+};
 Camera.prototype.resize = function(windowX, windowY, windowWidth, windowHeight)
 {
     this.windowX = windowX;
@@ -576,7 +583,29 @@ function GameObjectHandler()
                 object[key]();
 
                 // Refreshes the object's cell place after it has been moved 
-                if(object.body.moved)
+                if(object.body.moves)
+                {
+                    cameraGrid.removeRef(object);
+                    cameraGrid.addRef(object);
+                }
+            }
+        }
+    };
+
+    this.loopProcessList = function(cameraGrid, callback)
+    {
+        var i, j, object;
+
+        for(i in used)
+        {
+            for(j = 0; j < used[i].length; j++)
+            {
+                object = gameObjects[i][used[i][j]];
+
+                callback(object, gameObjects.references[i], used[i][j]);
+
+                // Refreshes the object's cell place after it has been moved 
+                if(object.body.moves)
                 {
                     cameraGrid.removeRef(object);
                     cameraGrid.addRef(object);
@@ -710,6 +739,16 @@ function World(config)
         );
 
         return this;
+    };
+
+    this.utils = {};
+    this.utils.loopProcessList = function(callback)
+    {
+        return gameObjectHandler.loopProcessList(cameraGrid, callback);
+    };
+    this.utils.resetProcessList = function()
+    {
+        gameObjectHandler.resetProcessList();
     };
 
     this.step = function()
@@ -867,9 +906,34 @@ function World(config)
 
         return this;
     };
+    this.grid.getCellFromCoordinates = function(col, row)
+    {
+        return cameraGrid.grid[col][row];
+    };
     this.grid.getCoordinates = function(x, y)
     {
         return cameraGrid.getCoors(x, y);
+    };
+    this.grid.getDimensions = function()
+    {
+        return {
+            cols: cameraGrid.cols,
+            rows: cameraGrid.rows,
+            cellWidth: cameraGrid.cellWidth,
+            cellHeight: cameraGrid.cellHeight
+        };
+    };
+    this.grid.getBounds = function()
+    {
+        var width = cameraGrid.cols * cameraGrid.cellWidth;
+        var height = cameraGrid.rows * cameraGrid.cellHeight;
+
+        return {
+            minX: 0,
+            minY: 0,
+            maxX: width,
+            maxY: height
+        };
     };
 
     this.cam = {};
@@ -907,7 +971,19 @@ function World(config)
     };
     this.cam.getBounds = function()
     {
-        return camera.bounds;
+        return {
+            minX: camera.bounds.minX,
+            minY: camera.bounds.minY,
+            maxX: camera.bounds.maxX,
+            maxY: camera.bounds.maxY
+        };
+    };
+    this.cam.setBounds = function(minX, minY, maxX, maxY)
+    {
+        camera.bounds.minX = minX;
+        camera.bounds.minY = minY;
+        camera.bounds.maxX = maxX;
+        camera.bounds.maxY = maxY;
     };
     this.cam.getWindow = function()
     {
@@ -951,12 +1027,22 @@ function World(config)
     this.cam.setWindowWidth = function(width)
     {
         camera.windowWidth = width;
+        camera.halfWindowWidth = width / 2;
         return this;
     };
     this.cam.setWindowHeight = function(height)
     {
         camera.windowHeight = height;
+        camera.halfWindowHeight = height / 2;
         return this;
+    };
+    this.cam.setWindow = function(x, y, width, height)
+    {
+        camera.resize(x, y, width, height);
+    };
+    this.cam.updateBoundingBox = function()
+    {
+        camera.updateBoundingBox();
     };
 
     // DEV only!
@@ -1118,9 +1204,28 @@ function createAA(object, keypairs, arrayName)
             this.cache.tempId = id;
 
             this[id] = arguments[0];
-            this[id]._name = this.cache.tempName || this._name;
-            this[id]._arrayName = this._name;
-            this[id]._id = id;
+
+            Object.defineProperty(this[id], "_name", 
+            {
+                enumerable: false,
+                writable: true,
+                configurable: true,
+                value: this.cache.tempName || this._name
+            });
+            Object.defineProperty(this[id], "_arrayName", 
+            {
+                enumerable: false,
+                writable: true,
+                configurable: true,
+                value: this._name
+            });
+            Object.defineProperty(this[id], "_id", 
+            {
+                enumerable: false,
+                writable: true,
+                configurable: true,
+                value: id
+            });
             return this[id];
         };
     }

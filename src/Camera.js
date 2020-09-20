@@ -116,6 +116,13 @@ Camera.prototype.scroll = function(x, y, name)
     this.boundingBox.maxX = this.scrollX + this.halfWindowWidth;
     this.boundingBox.maxY = this.scrollY + this.halfWindowHeight;
 };
+Camera.prototype.updateBoundingBox = function()
+{
+    this.boundingBox.minX = this.scrollX - this.halfWindowWidth;
+    this.boundingBox.minY = this.scrollY - this.halfWindowHeight;
+    this.boundingBox.maxX = this.scrollX + this.halfWindowWidth;
+    this.boundingBox.maxY = this.scrollY + this.halfWindowHeight;
+};
 Camera.prototype.resize = function(windowX, windowY, windowWidth, windowHeight)
 {
     this.windowX = windowX;

@@ -134,9 +134,28 @@ function createAA(object, keypairs, arrayName)
             this.cache.tempId = id;
 
             this[id] = arguments[0];
-            this[id]._name = this.cache.tempName || this._name;
-            this[id]._arrayName = this._name;
-            this[id]._id = id;
+
+            Object.defineProperty(this[id], "_name", 
+            {
+                enumerable: false,
+                writable: true,
+                configurable: true,
+                value: this.cache.tempName || this._name
+            });
+            Object.defineProperty(this[id], "_arrayName", 
+            {
+                enumerable: false,
+                writable: true,
+                configurable: true,
+                value: this._name
+            });
+            Object.defineProperty(this[id], "_id", 
+            {
+                enumerable: false,
+                writable: true,
+                configurable: true,
+                value: id
+            });
             return this[id];
         };
     }
