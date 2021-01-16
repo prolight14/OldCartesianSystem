@@ -62,7 +62,7 @@ var Rect = function(x, y, width, height)
     };
 };
 
-var Block = function(x, y, width, height)
+var Block = function(x, y, width, height, color)
 {
     Rect.call(this, x, y, width, height);
 
@@ -91,7 +91,7 @@ var Block = function(x, y, width, height)
 
     this.draw = function()
     {
-        ctx.fillStyle = "blue";
+        ctx.fillStyle = color;
         ctx.fillRect(this.x, this.y, this.width, this.height);
     };
 };
@@ -140,10 +140,11 @@ Math.seedrandom("world1");
 var worldBounds = world.cam.getBounds();
 for(var i = 0; i < 4000; i++)
 {
-    var w = 15 + Math.random() * 20;
-    var h = 15 + Math.random() * 20;
+    var w = 150 + Math.random() * 20;
+    var h = 150 + Math.random() * 20;
 
-    blocks.add(w / 2 + Math.random() * (worldBounds.maxX - worldBounds.minX - w), h / 2 + Math.random() * (worldBounds.maxY - worldBounds.minY - h), w, h);
+    blocks.add(w / 2 + Math.random() * (worldBounds.maxX - worldBounds.minX - w), h / 2 + Math.random() * (worldBounds.maxY - worldBounds.minY - h), w, h, 
+    ["blue", "red", "green", "purple", "yellow"][Math.floor(Math.random() * 5)]);
 }
 
 var players = world.add.gameObjectArray(Player);
@@ -196,7 +197,7 @@ world.setIntertermFunction(function()
 
 var c = 0;  
 
-// Separated from debug stuff
+// Seperated from debug stuff
 function separatedLoop()
 {
     world.cam.updateFocus(player1.x, player1.y);
@@ -222,6 +223,9 @@ function separatedLoop()
                 1
             );
         }
+
+        ctx.strokeStyle = "green";
+        ctx.strokeRect(col * cellWidth, row * cellHeight, cellWidth, cellHeight);
     });
 
     // world.processOffscreen(player2);

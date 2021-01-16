@@ -66,17 +66,23 @@ function GameObjectHandler()
                 }
             }
         }
+
+        // Sort the used id array
+        for(id in used)
+        {
+            used[id].sort();
+        }
     };
 
     this.act = function(cameraGrid, key)
     {
-        var i, j, object;
+        var id, j, object;
 
-        for(i in used)
+        for(id in used)
         {
-            for(j = 0; j < used[i].length; j++)
+            for(j = 0; j < used[id].length; j++)
             {
-                object = gameObjects[i][used[i][j]];
+                object = gameObjects[id][used[id][j]];
 
                 object[key]();
 
