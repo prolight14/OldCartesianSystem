@@ -3,6 +3,8 @@ let CameraGrid = require("./CameraGrid.js");
 let GameObjectHandler = require("./GameObjectHandler");
 let createAA = require("./createAA.js");
 
+// Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy unrestricted
+
 function World(config)
 {
     let camera = new Camera(
@@ -61,6 +63,16 @@ function World(config)
 
         return this;
     };
+
+    this.destroy = function()
+    {
+        camera.destroy();
+        camera = undefined;
+        cameraGrid.destroy();
+        cameraGrid = undefined;
+        gameObjectHandler.destroy();
+        gameObjectHandler = undefined;
+    };  
 
     var intertermFunction = function()
     {
@@ -427,17 +439,6 @@ function World(config)
     this.cam.updateBoundingBox = function()
     {
         camera.updateBoundingBox();
-    };
-
-    // DEV only!
-    this.exposeInternals = function()
-    {
-        return { 
-            camera: camera,
-            cameraGrid: cameraGrid,
-            gameObjectHandler: gameObjectHandler,
-            cameraTracker: cameraTracker
-        };
     };
 }
 

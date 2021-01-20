@@ -37,6 +37,15 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
         this.maxRow = this.grid[0].length - 1;
     };
 
+    this.destroy = function()
+    {
+        this.grid.length = 0;
+        delete this.minCol;
+        delete this.minRow;
+        delete this.maxCol;
+        delete this.maxRow;
+    };
+
     /**
      * Only use if you understand the implications, in other 
      * words only use if you don't need a bounds check first

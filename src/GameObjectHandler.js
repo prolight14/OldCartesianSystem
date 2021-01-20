@@ -24,6 +24,13 @@ function GameObjectHandler()
         return gameObjects.removeObject(name);
     };
 
+    this.destroy = function()
+    {
+        gameObjects = undefined;
+        usedFL = undefined;
+        used = undefined;
+    };
+
     this.resetProcessList = function()
     {
         usedFL = {};

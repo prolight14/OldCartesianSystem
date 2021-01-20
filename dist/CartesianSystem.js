@@ -167,6 +167,11 @@ function Camera(windowX, windowY, windowWidth, windowHeight)
     
     var focusObject;
 
+    this.destroy = function()
+    {
+        focusObject = undefined;
+    };
+
     this.update = function()
     {
         if(focusObject)
@@ -317,6 +322,15 @@ function CameraGrid(cols, rows, cellWidth, cellHeight)
         this.minRow = 0;
         this.maxCol = this.grid.length - 1;
         this.maxRow = this.grid[0].length - 1;
+    };
+
+    this.destroy = function()
+    {
+        this.grid.length = 0;
+        delete this.minCol;
+        delete this.minRow;
+        delete this.maxCol;
+        delete this.maxRow;
     };
 
     /**
@@ -526,6 +540,13 @@ function GameObjectHandler()
         return gameObjects.removeObject(name);
     };
 
+    this.destroy = function()
+    {
+        gameObjects = undefined;
+        usedFL = undefined;
+        used = undefined;
+    };
+
     this.resetProcessList = function()
     {
         usedFL = {};
@@ -637,6 +658,8 @@ let CameraGrid = __webpack_require__(/*! ./CameraGrid.js */ "./CameraGrid.js");
 let GameObjectHandler = __webpack_require__(/*! ./GameObjectHandler */ "./GameObjectHandler.js");
 let createAA = __webpack_require__(/*! ./createAA.js */ "./createAA.js");
 
+// Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy unrestricted
+
 function World(config)
 {
     let camera = new Camera(
@@ -695,6 +718,16 @@ function World(config)
 
         return this;
     };
+
+    this.destroy = function()
+    {
+        camera.destroy();
+        camera = undefined;
+        cameraGrid.destroy();
+        cameraGrid = undefined;
+        gameObjectHandler.destroy();
+        gameObjectHandler = undefined;
+    };  
 
     var intertermFunction = function()
     {
@@ -1061,17 +1094,6 @@ function World(config)
     this.cam.updateBoundingBox = function()
     {
         camera.updateBoundingBox();
-    };
-
-    // DEV only!
-    this.exposeInternals = function()
-    {
-        return { 
-            camera: camera,
-            cameraGrid: cameraGrid,
-            gameObjectHandler: gameObjectHandler,
-            cameraTracker: cameraTracker
-        };
     };
 }
 

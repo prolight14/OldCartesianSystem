@@ -31,6 +31,11 @@ function Camera(windowX, windowY, windowWidth, windowHeight)
     
     var focusObject;
 
+    this.destroy = function()
+    {
+        focusObject = undefined;
+    };
+
     this.update = function()
     {
         if(focusObject)
